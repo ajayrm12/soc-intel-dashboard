@@ -1,26 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SOC Dashboard</title>
+<meta charset="UTF-8">
+<title>SecOps Intelligence Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0a0f1c;
+    color: #e0e0e0;
+}
+
+/* 🔥 Animated grid background */
+body::before {
+    content: "";
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(0,255,150,0.05) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(0,255,150,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: moveGrid 10s linear infinite;
+    z-index: -1;
+}
+
+@keyframes moveGrid {
+    from { transform: translate(0,0); }
+    to { transform: translate(40px,40px); }
+}
+
+/* Container */
+.container {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+h1 {
+    color: #00ffcc;
+    font-size: 42px;
+}
+
+/* Input */
+.input-box {
+    margin-top: 20px;
+}
+
+input {
+    padding: 12px;
+    width: 320px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #111827;
+    color: white;
+}
+
+/* Button */
+button {
+    padding: 12px 20px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #00ffcc;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00e6b8;
+}
+
+/* Cards */
+.cards {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 12px;
+    width: 260px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,255,200,0.2);
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Status colors */
+.safe {
+    color: #00ff99;
+}
+.danger {
+    color: #ff4d4d;
+}
+
+/* Loader */
+.loader {
+    margin-top: 20px;
+    display: none;
+}
+
+</style>
 </head>
-<body style="background:black;color:lime;font-family:monospace">
 
-<h2>SOC Intel Dashboard</h2>
+<body>
 
-<input id="target" placeholder="Enter IP or Domain">
-<button onclick="analyze()">Analyze</button>
+<div class="container">
+    <h1>🛡️ SecOps Intelligence</h1>
+    <p>Threat Analysis for IP / Domain</p>
 
-<pre id="output"></pre>
+    <div class="input-box">
+        <input id="target" placeholder="Enter IP or domain (e.g. 8.8.8.8)">
+        <button onclick="analyze()">Analyze</button>
+    </div>
+
+    <div class="loader" id="loader">⏳ Analyzing...</div>
+
+    <div class="cards" id="results"></div>
+</div>
 
 <script>
 async function analyze() {
-    let target = document.getElementById("target").value;
+    const target = document.getElementById("target").value;
 
-    let res = await fetch("https://YOUR-BACKEND.onrender.com/analyze?target=" + target);
-    let data = await res.json();
+    if (!target) {
+        alert("Enter target!");
+        return;
+    }
 
-    document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("results").innerHTML = "";
+
+    try {
+        const res = await fetch("/analyze?target=" + target);
+        const data = await res.json();
+
+        document.getElementById("loader").style.display = "none";
+
+        let isDanger = data.virustotal.malicious > 0;
+        let verdict = isDanger ? "⚠️ MALICIOUS" : "✅ SAFE";
+        let cls = isDanger ? "danger" : "safe";
+
+        document.getElementById("results").innerHTML = `
+            <div class="card">
+                <h3>🌍 Location</h3>
+                <p>${data.geo.country}</p>
+                <p>${data.geo.city}</p>
+            </div>
+
+            <div class="card">
+                <h3>📡 ISP</h3>
+                <p>${data.geo.isp}</p>
+            </div>
+
+            <div class="card">
+                <h3>🛡️ Threat Intel</h3>
+                <p class="${cls}"><b>${verdict}</b></p>
+                <p>Malicious: ${data.virustotal.malicious}</p>
+                <p>Suspicious: ${data.virustotal.suspicious}</p>
+                <p>Harmless: ${data.virustotal.harmless}</p>
+            </div>
+        `;
+    } catch (err) {
+        document.getElementById("loader").style.display = "none";
+        alert("Error fetching data!");
+    }
 }
+
+/* Enter key support */
+document.getElementById("target").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        analyze();
+    }
+});
 </script>
 
 </body>
