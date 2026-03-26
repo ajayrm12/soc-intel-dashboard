@@ -4,15 +4,18 @@
 <meta charset="UTF-8">
 <title>SecOps Intelligence Dashboard</title>
 
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
 <style>
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
     background: #0a0f1c;
     color: #e0e0e0;
+    transition: 0.3s;
 }
 
-/* 🔥 Animated grid background */
+/* 🔥 Animated grid */
 body::before {
     content: "";
     position: fixed;
@@ -30,7 +33,18 @@ body::before {
     to { transform: translate(40px,40px); }
 }
 
-/* Container */
+/* 🚨 ALERT MODE */
+.alert {
+    background: radial-gradient(circle, #330000, #000);
+    animation: flash 1s infinite;
+}
+
+@keyframes flash {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(2); }
+    100% { filter: brightness(1); }
+}
+
 .container {
     text-align: center;
     padding: 60px 20px;
@@ -41,25 +55,18 @@ h1 {
     font-size: 42px;
 }
 
-/* Input */
-.input-box {
-    margin-top: 20px;
-}
-
 input {
     padding: 12px;
     width: 320px;
     border-radius: 8px;
     border: none;
-    outline: none;
     background: #111827;
     color: white;
 }
 
-/* Button */
 button {
     padding: 12px 20px;
-    margin-left: 10px;
+    margin: 5px;
     border: none;
     border-radius: 8px;
     background: #00ffcc;
@@ -72,7 +79,6 @@ button:hover {
     background: #00e6b8;
 }
 
-/* Cards */
 .cards {
     display: flex;
     justify-content: center;
@@ -88,40 +94,28 @@ button:hover {
     width: 260px;
     backdrop-filter: blur(8px);
     border: 1px solid rgba(0,255,200,0.2);
-    transition: 0.3s;
 }
 
-.card:hover {
-    transform: translateY(-5px);
-}
+.safe { color: #00ff99; }
+.danger { color: #ff4d4d; }
 
-/* Status colors */
-.safe {
-    color: #00ff99;
-}
-.danger {
-    color: #ff4d4d;
-}
-
-/* Loader */
 .loader {
     margin-top: 20px;
     display: none;
 }
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="container" id="captureArea">
     <h1>🛡️ SecOps Intelligence</h1>
     <p>Threat Analysis for IP / Domain</p>
 
-    <div class="input-box">
-        <input id="target" placeholder="Enter IP or domain (e.g. 8.8.8.8)">
-        <button onclick="analyze()">Analyze</button>
-    </div>
+    <input id="target" placeholder="Enter IP or domain">
+    <br><br>
+    <button onclick="analyze()">Analyze</button>
+    <button onclick="capture()">📸 Capture</button>
 
     <div class="loader" id="loader">⏳ Analyzing...</div>
 
@@ -146,9 +140,16 @@ async function analyze() {
 
         document.getElementById("loader").style.display = "none";
 
-        let isDanger = data.virustotal.malicious > 0;
+        let isDanger = data.virustotal?.malicious > 0;
         let verdict = isDanger ? "⚠️ MALICIOUS" : "✅ SAFE";
         let cls = isDanger ? "danger" : "safe";
+
+        /* 🚨 Background alert */
+        if (isDanger) {
+            document.body.classList.add("alert");
+        } else {
+            document.body.classList.remove("alert");
+        }
 
         document.getElementById("results").innerHTML = `
             <div class="card">
@@ -165,9 +166,14 @@ async function analyze() {
             <div class="card">
                 <h3>🛡️ Threat Intel</h3>
                 <p class="${cls}"><b>${verdict}</b></p>
-                <p>Malicious: ${data.virustotal.malicious}</p>
-                <p>Suspicious: ${data.virustotal.suspicious}</p>
-                <p>Harmless: ${data.virustotal.harmless}</p>
+                <p>Malicious: ${data.virustotal?.malicious || 0}</p>
+                <p>Suspicious: ${data.virustotal?.suspicious || 0}</p>
+                <p>Harmless: ${data.virustotal?.harmless || 0}</p>
+            </div>
+
+            <div class="card">
+                <h3>🌐 Domain Info</h3>
+                <p>Created: ${data.domain_age || "N/A"}</p>
             </div>
         `;
     } catch (err) {
@@ -176,11 +182,19 @@ async function analyze() {
     }
 }
 
-/* Enter key support */
+/* 📸 Screenshot */
+function capture() {
+    html2canvas(document.getElementById("captureArea")).then(canvas => {
+        let link = document.createElement('a');
+        link.download = 'secops-report.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+
+/* Enter key */
 document.getElementById("target").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        analyze();
-    }
+    if (e.key === "Enter") analyze();
 });
 </script>
 
