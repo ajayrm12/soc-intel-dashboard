@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOC Dashboard</title>
+</head>
+<body style="background:black;color:lime;font-family:monospace">
+
+<h2>SOC Intel Dashboard</h2>
+
+<input id="target" placeholder="Enter IP or Domain">
+<button onclick="analyze()">Analyze</button>
+
+<pre id="output"></pre>
+
+<script>
+async function analyze() {
+    let target = document.getElementById("target").value;
+
+    let res = await fetch("https://YOUR-BACKEND.onrender.com/analyze?target=" + target);
+    let data = await res.json();
+
+    document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
