@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-import os
+import requests
 
 app = Flask(__name__)
 
@@ -7,11 +7,16 @@ app = Flask(__name__)
 def home():
     return "Backend is running 🚀"
 
-@app.route("/analyze")
+@app.route("/analyze", methods=["GET"])
 def analyze():
     target = request.args.get("target")
-    return jsonify({"target": target})
+
+    ip_data = requests.get(f"http://ip-api.com/json/{target}").json()
+
+    return jsonify({
+        "target": target,
+        "geo": ip_data
+    })
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
