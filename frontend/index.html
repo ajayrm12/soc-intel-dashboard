@@ -1,202 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>SecOps Intelligence Dashboard</title>
+from flask import Flask, request, jsonify, send_from_directory
+import requests
+import os
+import whois
+from datetime import datetime
 
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+app = Flask(__name__, static_folder="../frontend")
 
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: #0a0f1c;
-    color: #e0e0e0;
-    transition: 0.3s;
-}
+VT_API_KEY = os.environ.get("VT_API_KEY")
 
-/* 🔥 Animated grid */
-body::before {
-    content: "";
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    background-image: linear-gradient(rgba(0,255,150,0.05) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(0,255,150,0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: moveGrid 10s linear infinite;
-    z-index: -1;
-}
+@app.route("/")
+def home():
+    return "Backend is running 🚀"
 
-@keyframes moveGrid {
-    from { transform: translate(0,0); }
-    to { transform: translate(40px,40px); }
-}
+# ✅ Serve frontend
+@app.route("/dashboard")
+def dashboard():
+    return send_from_directory(app.static_folder, "index.html")
 
-/* 🚨 ALERT MODE */
-.alert {
-    background: radial-gradient(circle, #330000, #000);
-    animation: flash 1s infinite;
-}
+@app.route("/analyze", methods=["GET"])
+def analyze():
+    target = request.args.get("target")
 
-@keyframes flash {
-    0% { filter: brightness(1); }
-    50% { filter: brightness(2); }
-    100% { filter: brightness(1); }
-}
+    # 🌍 GEO DATA
+    geo_data = requests.get(f"http://ip-api.com/json/{target}").json()
 
-.container {
-    text-align: center;
-    padding: 60px 20px;
-}
+    # 🛡️ VIRUSTOTAL
+    vt_data = {"malicious": 0, "suspicious": 0, "harmless": 0}
+    if VT_API_KEY:
+        try:
+            url = f"https://www.virustotal.com/api/v3/ip_addresses/{target}"
+            headers = {"x-apikey": VT_API_KEY}
 
-h1 {
-    color: #00ffcc;
-    font-size: 42px;
-}
+            res = requests.get(url, headers=headers)
+            data = res.json()
 
-input {
-    padding: 12px;
-    width: 320px;
-    border-radius: 8px;
-    border: none;
-    background: #111827;
-    color: white;
-}
+            stats = data["data"]["attributes"]["last_analysis_stats"]
 
-button {
-    padding: 12px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    background: #00ffcc;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-}
+            vt_data = {
+                "malicious": stats["malicious"],
+                "suspicious": stats["suspicious"],
+                "harmless": stats["harmless"]
+            }
+        except:
+            pass
 
-button:hover {
-    background: #00e6b8;
-}
+    # 🌐 DOMAIN AGE
+    domain_age = "N/A"
+    try:
+        w = whois.whois(target)
+        creation = w.creation_date
 
-.cards {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 40px;
-}
+        if isinstance(creation, list):
+            creation = creation[0]
 
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 12px;
-    width: 260px;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0,255,200,0.2);
-}
+        if creation:
+            age_days = (datetime.now() - creation).days
+            domain_age = f"{age_days} days"
+    except:
+        pass
 
-.safe { color: #00ff99; }
-.danger { color: #ff4d4d; }
+    return jsonify({
+        "target": target,
+        "geo": geo_data,
+        "virustotal": vt_data,
+        "domain_age": domain_age
+    })
 
-.loader {
-    margin-top: 20px;
-    display: none;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container" id="captureArea">
-    <h1>🛡️ SecOps Intelligence</h1>
-    <p>Threat Analysis for IP / Domain</p>
-
-    <input id="target" placeholder="Enter IP or domain">
-    <br><br>
-    <button onclick="analyze()">Analyze</button>
-    <button onclick="capture()">📸 Capture</button>
-
-    <div class="loader" id="loader">⏳ Analyzing...</div>
-
-    <div class="cards" id="results"></div>
-</div>
-
-<script>
-async function analyze() {
-    const target = document.getElementById("target").value;
-
-    if (!target) {
-        alert("Enter target!");
-        return;
-    }
-
-    document.getElementById("loader").style.display = "block";
-    document.getElementById("results").innerHTML = "";
-
-    try {
-        const res = await fetch("/analyze?target=" + target);
-        const data = await res.json();
-
-        document.getElementById("loader").style.display = "none";
-
-        let isDanger = data.virustotal?.malicious > 0;
-        let verdict = isDanger ? "⚠️ MALICIOUS" : "✅ SAFE";
-        let cls = isDanger ? "danger" : "safe";
-
-        /* 🚨 Background alert */
-        if (isDanger) {
-            document.body.classList.add("alert");
-        } else {
-            document.body.classList.remove("alert");
-        }
-
-        document.getElementById("results").innerHTML = `
-            <div class="card">
-                <h3>🌍 Location</h3>
-                <p>${data.geo.country}</p>
-                <p>${data.geo.city}</p>
-            </div>
-
-            <div class="card">
-                <h3>📡 ISP</h3>
-                <p>${data.geo.isp}</p>
-            </div>
-
-            <div class="card">
-                <h3>🛡️ Threat Intel</h3>
-                <p class="${cls}"><b>${verdict}</b></p>
-                <p>Malicious: ${data.virustotal?.malicious || 0}</p>
-                <p>Suspicious: ${data.virustotal?.suspicious || 0}</p>
-                <p>Harmless: ${data.virustotal?.harmless || 0}</p>
-            </div>
-
-            <div class="card">
-                <h3>🌐 Domain Info</h3>
-                <p>Created: ${data.domain_age || "N/A"}</p>
-            </div>
-        `;
-    } catch (err) {
-        document.getElementById("loader").style.display = "none";
-        alert("Error fetching data!");
-    }
-}
-
-/* 📸 Screenshot */
-function capture() {
-    html2canvas(document.getElementById("captureArea")).then(canvas => {
-        let link = document.createElement('a');
-        link.download = 'secops-report.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    });
-}
-
-/* Enter key */
-document.getElementById("target").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") analyze();
-});
-</script>
-
-</body>
-</html>
+if __name__ == "__main__":
+    app.run()
