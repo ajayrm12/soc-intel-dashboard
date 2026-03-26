@@ -1,17 +1,17 @@
 from flask import Flask, request, jsonify
-import requests
+import os
 
 app = Flask(__name__)
 
-@app.route("/analyze", methods=["GET"])
+@app.route("/")
+def home():
+    return "Backend is running"
+
+@app.route("/analyze")
 def analyze():
     target = request.args.get("target")
-
-    ip_api = requests.get(f"http://ip-api.com/json/{target}").json()
-
-    return jsonify({
-        "geo": ip_api
-    })
+    return jsonify({"target": target, "status": "ok"})
 
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 8080))  # VERY IMPORTANT
+    app.run(host="0.0.0.0", port=port)
