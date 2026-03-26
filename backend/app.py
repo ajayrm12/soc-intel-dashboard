@@ -15,7 +15,7 @@ body {
     overflow-x: hidden;
 }
 
-/* 🌌 Animated grid */
+
 body::before {
     content: "";
     position: fixed;
