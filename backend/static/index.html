@@ -615,6 +615,209 @@ textarea {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Verdict Banner ── */
+.verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.verdict-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background: currentColor;
+}
+
+.verdict-banner.v-high {
+  border-color: var(--red);
+  color: var(--red);
+  animation: threat-pulse 1.2s ease-in-out 4;
+}
+
+.verdict-banner.v-medium {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+.verdict-banner.v-low {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.verdict-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.verdict-body {}
+
+.verdict-title {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+}
+
+.verdict-desc {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+.verdict-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.verdict-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+/* ── SOC Ticket ── */
+.soc-ticket {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+}
+
+.soc-ticket-header {
+  background: rgba(0,229,255,0.06);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.soc-ticket-title {
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 3px;
+}
+
+.soc-ticket-meta {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex; gap: 20px; flex-wrap: wrap;
+}
+
+.soc-check-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  border-bottom: 1px solid rgba(26,58,92,0.4);
+}
+
+.soc-check-row:last-child { border-bottom: none; }
+
+.soc-check-label {
+  padding: 14px 20px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+  border-right: 1px solid rgba(26,58,92,0.4);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  letter-spacing: 1px;
+}
+
+.soc-check-value {
+  padding: 14px 20px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.soc-verdict-row {
+  background: rgba(0,229,255,0.03);
+  border-top: 2px solid var(--border);
+}
+
+.soc-verdict-row .soc-check-label {
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+
+.soc-verdict-row .soc-check-value {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.status-pill.clean     { background: rgba(48,209,88,0.12); color: var(--green); border: 1px solid rgba(48,209,88,0.3); }
+.status-pill.malicious { background: rgba(255,59,59,0.12); color: var(--red); border: 1px solid rgba(255,59,59,0.3); }
+.status-pill.suspicious{ background: rgba(255,159,10,0.12);color: var(--yellow);border: 1px solid rgba(255,159,10,0.3); }
+.status-pill.na        { background: rgba(74,112,144,0.12);color: var(--muted); border: 1px solid rgba(74,112,144,0.3); }
+.status-pill.pass      { background: rgba(48,209,88,0.12); color: var(--green); border: 1px solid rgba(48,209,88,0.3); }
+.status-pill.fail      { background: rgba(255,59,59,0.12); color: var(--red); border: 1px solid rgba(255,59,59,0.3); }
+
+.check-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+  display: inline-block;
+}
+.check-dot.clean      { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.check-dot.malicious  { background: var(--red);   box-shadow: 0 0 5px var(--red); }
+.check-dot.suspicious { background: var(--yellow);box-shadow: 0 0 5px var(--yellow); }
+.check-dot.na         { background: var(--muted); }
+
+.url-chip {
+  display: inline-block;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: var(--accent);
+  word-break: break-all;
+  margin: 2px 0;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .soc-check-row { grid-template-columns: 1fr; }
+  .soc-check-label { border-right: none; border-bottom: 1px solid rgba(26,58,92,0.4); }
+}
 </style>
 </head>
 <body>
@@ -701,21 +904,59 @@ textarea {
 </div>
 
 <!-- ══════════════════════════════════
-  EMAIL PHISHING
+  EMAIL PHISHING — SOC TICKET FORMAT
 ══════════════════════════════════ -->
 <div id="panel-email" class="panel">
   <div class="input-card">
-    <h2>[ EMAIL PHISHING ANALYZER ]</h2>
-    <p style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:4px;">
-      Paste raw email content or full headers below. In Gmail: open email → ⋮ → Show original.
+    <h2>[ SOC PHISHING TICKET ANALYZER ]</h2>
+    <p style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:14px;">
+      Upload a <strong style="color:var(--accent)">.eml file</strong> OR paste raw email content below.<br>
+      In Gmail: open email → ⋮ menu → <strong style="color:var(--accent)">Show original</strong> → Copy All.
     </p>
-    <textarea id="email-input" placeholder="Paste full email content or headers here...&#10;&#10;Include the full email text with links, headers (Received:, From:, DKIM, SPF) for maximum accuracy."></textarea>
-    <div style="margin-top:12px;">
-      <button class="btn" onclick="analyzeEmail()">Analyze Email</button>
+
+    <!-- File upload drop zone -->
+    <div id="eml-dropzone" onclick="document.getElementById('eml-file').click()"
+      style="border:2px dashed var(--border);border-radius:4px;padding:20px;text-align:center;
+             cursor:pointer;margin-bottom:14px;transition:border-color 0.2s;"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+      ondragleave="this.style.borderColor='var(--border)'"
+      ondrop="handleEmlDrop(event)">
+      <div style="font-size:24px;margin-bottom:6px;">📎</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">
+        Drop <strong style="color:var(--accent)">.eml file</strong> here or click to upload
+      </div>
+      <div id="eml-filename" style="font-family:var(--font-mono);font-size:11px;color:var(--green);margin-top:6px;"></div>
+      <input type="file" id="eml-file" accept=".eml,.txt,.msg" style="display:none" onchange="handleEmlFile(event)" />
     </div>
-    <div class="loading" id="email-loading"><div class="spinner"></div> Extracting URLs and scanning each with VirusTotal...</div>
+
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;margin-bottom:10px;">
+      — OR PASTE MANUALLY —
+    </div>
+
+    <textarea id="email-input" placeholder="Paste full raw email content here (headers + body)...
+    
+Example headers to look for:
+Received: from mail.example.com [1.2.3.4]
+From: sender@example.com
+Reply-To: other@suspicious.com
+DKIM-Signature: ...
+Received-SPF: pass / fail"></textarea>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;">
+      <button class="btn" onclick="analyzePhishingTicket()">🔍 Analyze &amp; Generate SOC Ticket</button>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">
+        Ticket No: <input type="text" id="ticket-no-input" placeholder="INC0000001"
+          style="width:120px;padding:4px 8px;font-size:11px;background:var(--bg);
+                 border:1px solid var(--border);color:var(--accent);border-radius:2px;" />
+      </div>
+    </div>
+    <div class="loading" id="email-loading">
+      <div class="spinner"></div>
+      <span id="email-loading-msg">Running full SOC analysis — sender domain, IP, URLs, headers...</span>
+    </div>
   </div>
-  <div id="email-alert" class="alert-banner">⚠ PHISHING INDICATORS DETECTED — Treat this email as malicious</div>
+
+  <div id="email-alert" class="alert-banner">⚠ PHISHING EMAIL CONFIRMED — Escalate immediately</div>
   <div id="email-results"></div>
 </div>
 
@@ -869,6 +1110,82 @@ function threatCard(t) {
   </div>`;
 }
 
+/* ═══════════════════════════════════════════
+   VERDICT CARD — plain-English SOC conclusion
+═══════════════════════════════════════════ */
+function verdictCard(t, type, data) {
+  const score    = t.score;
+  const severity = t.severity;   // LOW / MEDIUM / HIGH
+  const bkd      = t.breakdown || {};
+  const mal      = bkd.virustotal || 0;
+  const abuse    = bkd.abuseipdb  || 0;
+  const ageScore = bkd.domain_age || 0;
+  const urlScore = bkd.url_indicators || 0;
+
+  let icon, title, desc, tags, cls;
+
+  // ── HIGH ──
+  if (severity === 'HIGH') {
+    cls  = 'v-high';
+    icon = '🚨';
+    title = 'MALICIOUS — DO NOT TRUST';
+
+    const reasons = [];
+    if (mal  >= 20) reasons.push(`${Math.round(mal/40*100)}% of AV engines flagged it as malicious`);
+    else if (mal > 0) reasons.push(`multiple antivirus engines detected malicious activity`);
+    if (abuse >= 15) reasons.push(`high abuse confidence score on AbuseIPDB`);
+    if (ageScore >= 10) reasons.push(`domain is very recently registered (high-risk)`);
+    if (urlScore >= 8)  reasons.push(`URL structure contains multiple red flags`);
+
+    desc = reasons.length > 0
+      ? `This ${type} has been confirmed as a threat. Specifically: ${reasons.join('; ')}.`
+      : `This ${type} scored ${score}/100 on the composite threat scale — treat as malicious.`;
+
+    tags = ['BLOCK IMMEDIATELY', 'DO NOT CLICK', 'REPORT TO SOC', 'ESCALATE'];
+
+  // ── MEDIUM ──
+  } else if (severity === 'MEDIUM') {
+    cls  = 'v-medium';
+    icon = '⚠️';
+    title = 'SUSPICIOUS — PROCEED WITH CAUTION';
+
+    const reasons = [];
+    if (mal > 0)        reasons.push(`${mal > 15 ? 'several' : 'some'} security vendors flagged this`);
+    if (abuse >= 5)     reasons.push(`reported for abuse activity`);
+    if (ageScore >= 5)  reasons.push(`domain is relatively new`);
+    if (urlScore >= 4)  reasons.push(`URL contains suspicious patterns`);
+
+    desc = reasons.length > 0
+      ? `This ${type} shows suspicious signals: ${reasons.join('; ')}. Do not interact without further investigation.`
+      : `This ${type} scored ${score}/100 — not definitively malicious but warrants investigation.`;
+
+    tags = ['INVESTIGATE FURTHER', 'DO NOT SHARE CREDENTIALS', 'MONITOR TRAFFIC'];
+
+  // ── LOW ──
+  } else {
+    cls  = 'v-low';
+    icon = '✅';
+    title = 'LIKELY SAFE';
+
+    desc = `No significant threat signals detected for this ${type}. Score: ${score}/100. `
+         + `This does not guarantee safety — always exercise caution online.`;
+
+    tags = ['LOW RISK', 'CONTINUE MONITORING'];
+  }
+
+  const tagsHtml = tags.map(t => `<span class="verdict-tag">${t}</span>`).join('');
+
+  return `
+  <div class="verdict-banner ${cls}">
+    <div class="verdict-icon">${icon}</div>
+    <div class="verdict-body">
+      <div class="verdict-title">${title}</div>
+      <div class="verdict-desc">${desc}</div>
+      <div class="verdict-actions">${tagsHtml}</div>
+    </div>
+  </div>`;
+}
+
 function vtStatsCard(stats, title) {
   const total = Math.max(stats.total || 1, 1);
   return `
@@ -1002,6 +1319,7 @@ async function analyzeIP() {
     if (d.threat && d.threat.score >= 70) alert.classList.add('active');
 
     res.innerHTML = `
+      ${d.threat ? verdictCard(d.threat, 'IP address', d) : ''}
       ${d.threat ? threatCard(d.threat) : ''}
       <div class="results-grid">
         ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — IP') : ''}
@@ -1047,6 +1365,7 @@ async function analyzeDomain() {
       .map(([k,v]) => `<span class="badge badge-blue" style="margin:2px">${v}</span>`).join('') || '—';
 
     res.innerHTML = `
+      ${d.threat ? verdictCard(d.threat, 'domain', d) : ''}
       ${d.threat ? threatCard(d.threat) : ''}
       <div class="results-grid">
         ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — DOMAIN') : ''}
@@ -1083,6 +1402,7 @@ async function analyzeURL() {
     if (d.threat?.score >= 70) alert.classList.add('active');
 
     res.innerHTML = `
+      ${d.threat ? verdictCard(d.threat, 'URL', d) : ''}
       ${d.threat ? threatCard(d.threat) : ''}
       <div class="results-grid">
         ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — URL') : ''}
@@ -1104,103 +1424,299 @@ async function analyzeURL() {
 }
 
 /* ═══════════════════════════════════════════
-   EMAIL PHISHING ANALYSIS
+   EML FILE UPLOAD HANDLERS
 ═══════════════════════════════════════════ */
-async function analyzeEmail() {
-  const email = document.getElementById('email-input').value.trim();
-  if (!email) return;
-  const res   = document.getElementById('email-results');
-  const alert = document.getElementById('email-alert');
-  res.innerHTML = '';
-  alert.classList.remove('active');
+function handleEmlFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('email-input').value = e.target.result;
+    document.getElementById('eml-filename').textContent = '✓ Loaded: ' + file.name;
+    document.getElementById('eml-dropzone').style.borderColor = 'var(--green)';
+  };
+  reader.readAsText(file);
+}
+
+function handleEmlDrop(event) {
+  event.preventDefault();
+  document.getElementById('eml-dropzone').style.borderColor = 'var(--border)';
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('email-input').value = e.target.result;
+    document.getElementById('eml-filename').textContent = '✓ Loaded: ' + file.name;
+    document.getElementById('eml-dropzone').style.borderColor = 'var(--green)';
+  };
+  reader.readAsText(file);
+}
+
+/* ═══════════════════════════════════════════
+   SOC TICKET STATUS HELPERS
+═══════════════════════════════════════════ */
+function statusPill(status) {
+  if (!status) return '<span class="status-pill na">N/A</span>';
+  const s = status.toLowerCase();
+  let cls = 'na', label = status;
+  if (s.includes('malicious'))  { cls = 'malicious'; }
+  else if (s.includes('suspicious') || s.includes('issues')) { cls = 'suspicious'; }
+  else if (s.includes('clean') || s.includes('pass') || s.includes('non')) { cls = 'clean'; }
+  else if (s === 'n/a' || s === 'unknown' || s === 'not found') { cls = 'na'; }
+  return `<span class="status-pill ${cls}">● ${label}</span>`;
+}
+
+function dotFor(status) {
+  if (!status) return '<span class="check-dot na"></span>';
+  const s = status.toLowerCase();
+  if (s.includes('malicious'))  return '<span class="check-dot malicious"></span>';
+  if (s.includes('suspicious') || s.includes('issues')) return '<span class="check-dot suspicious"></span>';
+  if (s.includes('clean') || s.includes('pass') || s.includes('non')) return '<span class="check-dot clean"></span>';
+  return '<span class="check-dot na"></span>';
+}
+
+/* ═══════════════════════════════════════════
+   SOC TICKET RENDERER
+═══════════════════════════════════════════ */
+function renderSocTicket(d) {
+  const c  = d.checks || {};
+  const sd = c.sender_domain || {};
+  const dc = c.domain_check  || {};
+  const di = c.domain_ip     || {};
+  const da = c.domain_age    || {};
+  const uc = c.url_check     || {};
+  const at = c.attachment    || {};
+  const hd = c.header        || {};
+  const hi = c.header_ip     || {};
+
+  // Verdict color
+  const vColor = d.verdict === 'Malicious' ? 'var(--red)' :
+                 d.verdict === 'Suspicious' ? 'var(--yellow)' : 'var(--green)';
+  const vIcon  = d.verdict === 'Malicious' ? '🚨' :
+                 d.verdict === 'Suspicious' ? '⚠️' : '✅';
+
+  // ── Sender Domain row ──
+  const sdDetail = sd.domain
+    ? `${sd.domain} &nbsp; ${statusPill(sd.status)}
+       ${sd.malicious_engines > 0 ? `<br><span style="color:var(--red);font-size:10px">⚠ ${sd.malicious_engines} engine(s) flagged</span>` : ''}`
+    : 'Not detected in headers';
+
+  // ── Domain check row ──
+  const dcItems = (dc.results || []).map(r =>
+    `<div style="margin-bottom:4px">
+       ${dotFor(r.status)} <span class="url-chip">${r.domain}</span>
+       ${statusPill(r.status)}
+       ${r.malicious > 0 ? `<span style="color:var(--red);font-size:10px"> (${r.malicious} engines)</span>` : ''}
+     </div>`
+  ).join('') || 'No body domains found';
+
+  // ── Domain IP row ──
+  const diItems = (di.results || []).map(r =>
+    `<div style="margin-bottom:4px">
+       ${dotFor(r.status)}
+       <code style="color:var(--accent)">${r.ip}</code>
+       ${statusPill(r.status)}
+       <br><span style="font-size:10px;color:var(--muted)">
+         ${r.country || ''} · ${r.isp || ''}
+         ${r.is_tor  ? ' · <span style="color:var(--red)">TOR EXIT</span>' : ''}
+         ${r.is_proxy? ' · <span style="color:var(--yellow)">PROXY</span>' : ''}
+         ${r.abuse_confidence > 0 ? ` · AbuseIPDB: ${r.abuse_confidence}%` : ''}
+       </span>
+     </div>`
+  ).join('') || `<span style="color:var(--muted)">N/A</span>`;
+
+  // ── Domain Age row ──
+  const daDetail = `${da.age_display || 'Unknown'}
+    <br><span style="font-size:10px;color:var(--muted)">
+      Domain: ${da.domain || '—'} · Created: ${da.creation_date ? String(da.creation_date).slice(0,10) : '—'}
+      · Registrar: ${da.registrar || '—'}
+    </span>`;
+
+  // ── URL check row ──
+  const urlItems = (uc.results || []).map(r => {
+    const flags = (r.risk_flags || []).slice(0,2).map(f =>
+      `<span style="color:var(--yellow);font-size:9px">⚠ ${f}</span>`).join('<br>');
+    return `<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(26,58,92,0.3)">
+      <div class="url-chip" style="margin-bottom:4px">${r.url.slice(0,80)}${r.url.length>80?'...':''}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        urlvoid: ${statusPill(r.status)}
+        virustotal: ${statusPill(r.vt_malicious > 0 ? 'Malicious' : 'Clean')}
+        ${r.vt_malicious > 0 ? `<span style="color:var(--red);font-size:10px">(${r.vt_malicious} engines)</span>` : ''}
+      </div>
+      ${flags ? `<div style="margin-top:4px">${flags}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const urlDetail = uc.urls_found > 0
+    ? `${uc.urls_found} URL(s) found · ${uc.urls_analyzed} analyzed<br>${urlItems}`
+    : 'No URLs found in email body';
+
+  // ── Attachment row ──
+  const atDetail = at.found > 0
+    ? `${at.files.map(f => `<span class="url-chip" style="color:var(--red)">${f}</span>`).join(' ')}
+       <br>${statusPill(at.status)}`
+    : `${statusPill('Clean')} No attachments detected`;
+
+  // ── Header check row ──
+  const spfAlign  = hd.spf_alignment  || 'N/A';
+  const dkimAlign = hd.dkim_alignment || 'N/A';
+  const hdrDetail = `
+    SPF alignment: <strong style="color:${spfAlign==='Yes'?'var(--green)':spfAlign==='No'?'var(--red)':'var(--muted)'}">${spfAlign}</strong>
+    &nbsp;·&nbsp;
+    DKIM authentication: <strong style="color:${dkimAlign==='Yes'?'var(--green)':dkimAlign==='No'?'var(--red)':'var(--muted)'}">${dkimAlign}</strong>
+    &nbsp;·&nbsp;
+    DMARC: <strong style="color:${hd.dmarc==='PASS'?'var(--green)':hd.dmarc==='FAIL'?'var(--red)':'var(--muted)'}">${hd.dmarc||'N/A'}</strong>
+    <br>
+    From: <span style="color:var(--accent)">${hd.from_address||'—'}</span>
+    ${hd.reply_to ? `&nbsp;·&nbsp; Reply-To: <span style="color:${hd.reply_to_mismatch?'var(--red)':'var(--text)'}">${hd.reply_to}</span>` : ''}
+    ${hd.reply_to_mismatch ? '<br><span style="color:var(--red)">⚠ Reply-To domain mismatch detected</span>' : ''}
+    ${(hd.issues||[]).length > 0 ? `<br><span style="color:var(--red)">Issues: ${hd.issues.join(', ')}</span>` : ''}`;
+
+  // ── Header IP row ──
+  const hiDetail = hi.ip && hi.ip !== 'Not found in headers'
+    ? `<code style="color:var(--accent)">${hi.ip}</code> ${statusPill(hi.status)}
+       <br><span style="font-size:10px;color:var(--muted)">
+         ${hi.country||''} · ${hi.isp||''}
+         ${hi.is_tor   ? ' · <span style="color:var(--red)">TOR EXIT</span>' : ''}
+         ${hi.is_proxy ? ' · <span style="color:var(--yellow)">PROXY</span>' : ''}
+         ${hi.abuse_confidence > 0 ? ` · AbuseIPDB: ${hi.abuse_confidence}%` : ''}
+       </span>`
+    : '<span style="color:var(--muted)">N/A — IP not found in Received headers</span>';
+
+  return `
+  <!-- VERDICT BANNER -->
+  <div class="verdict-banner ${d.verdict==='Malicious'?'v-high':d.verdict==='Suspicious'?'v-medium':'v-low'}"
+       style="margin-bottom:20px">
+    <div class="verdict-icon">${vIcon}</div>
+    <div class="verdict-body">
+      <div class="verdict-title">${d.verdict?.toUpperCase()}</div>
+      <div class="verdict-desc">${d.verdict_reason || ''}</div>
+      <div class="verdict-actions">
+        ${d.verdict === 'Malicious'
+          ? `<span class="verdict-tag">BLOCK SENDER</span>
+             <span class="verdict-tag">DO NOT CLICK LINKS</span>
+             <span class="verdict-tag">REPORT TO SOC</span>
+             <span class="verdict-tag">ESCALATE</span>`
+          : d.verdict === 'Suspicious'
+          ? `<span class="verdict-tag">INVESTIGATE FURTHER</span>
+             <span class="verdict-tag">DO NOT SHARE CREDENTIALS</span>`
+          : `<span class="verdict-tag">LOW RISK</span>
+             <span class="verdict-tag">CONTINUE MONITORING</span>`}
+      </div>
+    </div>
+  </div>
+
+  <!-- SOC TICKET TABLE -->
+  <div class="soc-ticket">
+    <div class="soc-ticket-header">
+      <div class="soc-ticket-title">SOC INCIDENT TICKET</div>
+      <div class="soc-ticket-meta">
+        <span>Date: <strong style="color:var(--text)">${d.date}</strong></span>
+        <span>Ticket: <strong style="color:var(--accent)">${d.ticket_no}</strong></span>
+        <span>Threat Score: <strong style="color:${vColor}">${d.threat_score}/100</strong></span>
+      </div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(sd.status)} SENDER DOMAIN</div>
+      <div class="soc-check-value">${sdDetail}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(dc.overall_status)} DOMAIN CHECK</div>
+      <div class="soc-check-value">${dcItems}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(di.overall_status)} DOMAIN IP</div>
+      <div class="soc-check-value">${diItems}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">📅 DOMAIN AGE</div>
+      <div class="soc-check-value">${daDetail}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(uc.overall_status)} URL CHECK</div>
+      <div class="soc-check-value">${urlDetail}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(at.status)} ATTACHMENT</div>
+      <div class="soc-check-value">${atDetail}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(hd.overall_status)} HEADER CHECK</div>
+      <div class="soc-check-value">${hdrDetail}</div>
+    </div>
+
+    <div class="soc-check-row">
+      <div class="soc-check-label">${dotFor(hi.status)} HEADER IP</div>
+      <div class="soc-check-value">${hiDetail}</div>
+    </div>
+
+    <div class="soc-check-row soc-verdict-row">
+      <div class="soc-check-label">VERDICT</div>
+      <div class="soc-check-value" style="color:${vColor}">${d.verdict}</div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN: ANALYZE PHISHING TICKET
+═══════════════════════════════════════════ */
+async function analyzePhishingTicket() {
+  const email    = document.getElementById('email-input').value.trim();
+  const ticketNo = document.getElementById('ticket-no-input').value.trim() || undefined;
+  if (!email) {
+    alert('Please paste email content or upload an .eml file first.');
+    return;
+  }
+
+  const res       = document.getElementById('email-results');
+  const alertBnr  = document.getElementById('email-alert');
+  const loadMsg   = document.getElementById('email-loading-msg');
+  res.innerHTML   = '';
+  alertBnr.classList.remove('active');
   setLoading('email-loading', true);
 
+  // Animated loading messages to keep user informed during long scans
+  const msgs = [
+    'Extracting sender domain and IP from headers...',
+    'Checking domain reputation on VirusTotal...',
+    'Resolving sender IP and checking AbuseIPDB...',
+    'Scanning URLs with VirusTotal (2-step)...',
+    'Checking domain age via WHOIS...',
+    'Analyzing SPF / DKIM / DMARC headers...',
+    'Computing final threat score and verdict...'
+  ];
+  let mi = 0;
+  const msgInterval = setInterval(() => {
+    loadMsg.textContent = msgs[mi % msgs.length];
+    mi++;
+  }, 4000);
+
   try {
-    const d = await apiFetch('/api/analyze/email', { email });
+    const d = await apiFetch('/api/analyze/phishing-ticket', {
+      email: email,
+      ticket_no: ticketNo
+    });
+    clearInterval(msgInterval);
     setLoading('email-loading', false);
 
-    if (d.error) { res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`; return; }
-
-    if (d.threat?.score >= 40 || (d.phishing_flags && d.phishing_flags.length >= 2)) {
-      alert.classList.add('active');
+    if (d.error) {
+      res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`;
+      return;
     }
 
-    // Phishing flags
-    const flagsHtml = (d.phishing_flags && d.phishing_flags.length > 0)
-      ? d.phishing_flags.map(f => `<div class="flag-item" style="margin-bottom:6px">${f}</div>`).join('')
-      : '<div class="flag-item flag-ok">No phishing indicators detected</div>';
+    if (d.verdict === 'Malicious') alertBnr.classList.add('active');
 
-    // Header info
-    const hdr = d.headers || {};
-    const spfColor  = hdr.spf  === 'PASS' ? 'var(--green)' : (hdr.spf  === 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
-    const dkimColor = hdr.dkim === 'PASS' ? 'var(--green)' : (hdr.dkim === 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
-    const dmarcColor= hdr.dmarc=== 'PASS' ? 'var(--green)' : (hdr.dmarc=== 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
-
-    const chainHtml = (hdr.received_chain && hdr.received_chain.length > 0)
-      ? hdr.received_chain.map((h,i) => `<div class="chain-item">${i+1}. ${h}</div>`).join('')
-      : '<div style="color:var(--muted);font-family:var(--font-mono);font-size:11px">No Received headers found</div>';
-
-    // URL results
-    const urlsHtml = (d.urls_analyzed && d.urls_analyzed.length > 0)
-      ? d.urls_analyzed.map(u => {
-          const mal = u.vt?.stats?.malicious || 0;
-          const badgeClass = mal > 0 ? 'badge-red' : 'badge-green';
-          const badgeLabel = mal > 0 ? `MALICIOUS (${mal})` : 'CLEAN';
-          return `
-          <div class="url-item">
-            <div class="url-str">${u.url}</div>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <span class="badge ${badgeClass}">${badgeLabel}</span>
-              ${(u.indicators?.flags || []).slice(0,2).map(f =>
-                `<span class="badge badge-yellow" style="font-size:9px">${f.slice(0,50)}</span>`
-              ).join('')}
-            </div>
-          </div>`;
-        }).join('')
-      : '<div style="color:var(--muted);font-family:var(--font-mono);font-size:12px">No URLs found in email</div>';
-
-    res.innerHTML = `
-      ${d.threat ? threatCard(d.threat) : ''}
-
-      <div class="results-grid">
-        <!-- Header Authentication -->
-        <div class="rcard">
-          <h3><span class="icon"></span>EMAIL AUTHENTICATION</h3>
-          <table class="data-table">
-            <tr><td>SPF</td><td style="color:${spfColor};font-weight:700">${hdr.spf||'—'}</td></tr>
-            <tr><td>DKIM</td><td style="color:${dkimColor};font-weight:700">${hdr.dkim||'—'}</td></tr>
-            <tr><td>DMARC</td><td style="color:${dmarcColor};font-weight:700">${hdr.dmarc||'—'}</td></tr>
-            <tr><td>From</td><td>${hdr.from_address||'—'}</td></tr>
-            <tr><td>Reply-To</td><td>${hdr.reply_to||'—'}</td></tr>
-            <tr><td>Reply Mismatch</td><td>
-              ${hdr.reply_to_mismatch
-                ? '<span class="badge badge-red">YES — SUSPICIOUS</span>'
-                : '<span class="badge badge-green">NO</span>'}
-            </td></tr>
-            <tr><td>Hop Count</td><td>${hdr.hop_count||0}</td></tr>
-          </table>
-        </div>
-
-        <!-- Phishing Indicators -->
-        <div class="rcard">
-          <h3><span class="icon"></span>PHISHING INDICATORS (${d.phishing_flags?.length||0})</h3>
-          ${flagsHtml}
-        </div>
-      </div>
-
-      <!-- URL Analysis -->
-      <div class="rcard" style="margin-top:16px">
-        <h3><span class="icon"></span>URL ANALYSIS (${d.url_count} found, ${d.urls_analyzed?.length||0} scanned)</h3>
-        ${urlsHtml}
-      </div>
-
-      <!-- Received Chain -->
-      <div class="rcard" style="margin-top:16px">
-        <h3><span class="icon"></span>RECEIVED CHAIN</h3>
-        ${chainHtml}
-      </div>`;
+    res.innerHTML = renderSocTicket(d);
 
   } catch(e) {
+    clearInterval(msgInterval);
     setLoading('email-loading', false);
     res.innerHTML = `<div class="error-msg">Connection error: ${e.message}</div>`;
   }
