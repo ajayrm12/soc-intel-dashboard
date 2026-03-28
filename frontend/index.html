@@ -1,244 +1,1215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SecOps Intelligence Dashboard</title>
-
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
 
 <style>
+/* ══════════════════════════════════════════
+   DESIGN SYSTEM — Cyberpunk Ops Terminal
+══════════════════════════════════════════ */
+:root {
+  --bg:          #050a0f;
+  --bg2:         #080f17;
+  --panel:       #0c1622;
+  --panel2:      #101d2b;
+  --border:      #1a3a5c;
+  --accent:      #00e5ff;
+  --accent2:     #7b61ff;
+  --green:       #30d158;
+  --yellow:      #ff9f0a;
+  --red:         #ff3b3b;
+  --text:        #c8e6ff;
+  --muted:       #4a7090;
+  --font-mono:   'Share Tech Mono', monospace;
+  --font-body:   'Rajdhani', sans-serif;
+  --font-head:   'Orbitron', monospace;
+  --glow:        0 0 20px rgba(0,229,255,0.25);
+  --glow-red:    0 0 20px rgba(255,59,59,0.5);
+  --glow-green:  0 0 20px rgba(48,209,88,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: #0a0f1c;
-    color: #e0e0e0;
-    overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-
-body::before {
-    content: "";
-    position: fixed;
-    width: 200%;
-    height: 200%;
-    background-image:
-        linear-gradient(rgba(0,255,150,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,150,0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: moveGrid 15s linear infinite;
-    z-index: -2;
+/* Canvas background */
+#bg-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+  opacity: 0.35;
 }
 
-@keyframes moveGrid {
-    from { transform: translate(0,0); }
-    to { transform: translate(-200px,-200px); }
+.app { position: relative; z-index: 1; }
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(0,229,255,0.04) 0%, transparent 60%);
 }
 
-/* ✨ Floating glow animation */
-.glow {
-    position: fixed;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(0,255,200,0.15), transparent);
-    animation: float 10s infinite alternate;
-    z-index: -1;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-.glow:nth-child(1) { top: 10%; left: 10%; }
-.glow:nth-child(2) { bottom: 10%; right: 10%; animation-delay: 3s; }
-
-@keyframes float {
-    from { transform: translate(0,0); }
-    to { transform: translate(50px,50px); }
+.logo-icon {
+  width: 40px; height: 40px;
+  position: relative;
 }
 
-/* 🚨 ALERT MODE */
-.alert {
-    background: radial-gradient(circle, #330000, #000) !important;
-    animation: flash 1s infinite;
+.logo-icon::before, .logo-icon::after {
+  content: '';
+  position: absolute;
+  border: 2px solid var(--accent);
+}
+.logo-icon::before { inset: 0; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
+.logo-icon::after  { inset: 6px; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); opacity: 0.4; }
+
+.logo h1 {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-shadow: var(--glow);
 }
 
-@keyframes flash {
-    0% { filter: brightness(1); }
-    50% { filter: brightness(2); }
-    100% { filter: brightness(1); }
+.logo small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 4px;
+  margin-top: 2px;
 }
 
-/* Layout */
-.container {
-    text-align: center;
-    padding: 60px 20px;
+.status-bar {
+  display: flex;
+  gap: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
 }
 
-h1 {
-    color: #00ffcc;
-    font-size: 42px;
-    margin-bottom: 10px;
+.status-dot {
+  display: flex; align-items: center; gap: 6px;
 }
 
-/* Input */
-input {
-    padding: 12px;
-    width: 320px;
-    border-radius: 8px;
-    border: none;
-    background: #111827;
-    color: white;
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 2s ease-in-out infinite;
 }
 
-/* Buttons */
-button {
-    padding: 12px 20px;
-    margin: 8px;
-    border: none;
-    border-radius: 8px;
-    background: #00ffcc;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
 }
 
-button:hover {
-    background: #00e6b8;
+/* ── Tabs ── */
+nav {
+  display: flex;
+  gap: 0;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
 }
 
-/* Cards */
-.cards {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 40px;
-    animation: fadeIn 0.5s ease-in;
+.tab {
+  padding: 14px 26px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  position: relative;
+  background: none; border-top: none;
+  border-left: none; border-right: none;
 }
 
-.card {
-    background: rgba(255,255,255,0.05);
-    padding: 20px;
-    border-radius: 12px;
-    width: 260px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(0,255,200,0.2);
-    transition: 0.3s;
+.tab:hover { color: var(--text); }
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(0,229,255,0.05);
 }
 
-.card:hover {
-    transform: translateY(-6px);
+/* ── Main layout ── */
+main {
+  padding: 28px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.safe { color: #00ff99; }
-.danger { color: #ff4d4d; }
+/* Tab panels */
+.panel { display: none; }
+.panel.active { display: block; }
 
-/* Loader */
-.loader {
-    margin-top: 20px;
-    display: none;
+/* ── Input card ── */
+.input-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px);}
-    to { opacity: 1; transform: translateY(0);}
+.input-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
 }
+
+.input-card h2 {
+  font-family: var(--font-head);
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+}
+
+input[type=text], textarea {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-radius: 3px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type=text]:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,229,255,0.1);
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  resize: vertical;
+  margin-top: 12px;
+}
+
+.btn {
+  padding: 12px 28px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: var(--glow);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Loading ── */
+.loading {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.loading.active { display: flex; }
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Results grid ── */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.results-grid.wide { grid-template-columns: 1fr; }
+
+@media (max-width: 700px) {
+  .results-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 12px; }
+  main { padding: 16px; }
+  .tab { padding: 12px 14px; font-size: 11px; letter-spacing: 1px; }
+  header { padding: 14px 16px; }
+  .status-bar { display: none; }
+}
+
+/* ── Result card ── */
+.rcard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.rcard h3 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rcard h3 .icon {
+  width: 16px; height: 16px;
+  background: var(--accent);
+  clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  opacity: 0.7;
+}
+
+/* ── Threat score meter ── */
+.threat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.threat-card.malicious {
+  border-color: var(--red);
+  animation: threat-pulse 1.5s ease-in-out 3;
+}
+
+@keyframes threat-pulse {
+  0%,100% { box-shadow: none; }
+  50%      { box-shadow: var(--glow-red); }
+}
+
+.threat-card.safe {
+  border-color: var(--green);
+}
+
+.threat-gauge {
+  position: relative;
+  width: 100px; height: 100px;
+  flex-shrink: 0;
+}
+
+.threat-gauge svg {
+  transform: rotate(-90deg);
+  width: 100%; height: 100%;
+}
+
+.gauge-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+.gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+
+.gauge-label {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--font-head);
+}
+
+.gauge-score {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gauge-max {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.threat-info {}
+
+.threat-severity {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+}
+
+.threat-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.breakdown-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  max-width: 120px;
+}
+
+.breakdown-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 1s ease;
+}
+
+/* ── VT stats bar ── */
+.vt-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.stat-label { width: 90px; color: var(--muted); }
+
+.stat-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+.stat-fill.malicious { background: var(--red); }
+.stat-fill.suspicious { background: var(--yellow); }
+.stat-fill.harmless { background: var(--green); }
+
+.stat-val {
+  width: 30px;
+  text-align: right;
+}
+
+/* ── Data table ── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(26,58,92,0.5);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  vertical-align: top;
+}
+
+.data-table td:first-child {
+  color: var(--muted);
+  width: 40%;
+}
+
+.data-table td:last-child {
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ── Flags list ── */
+.flags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,59,59,0.07);
+  border: 1px solid rgba(255,59,59,0.2);
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.flag-item::before {
+  content: '⚠';
+  color: var(--red);
+  flex-shrink: 0;
+}
+
+.flag-ok {
+  background: rgba(48,209,88,0.07);
+  border-color: rgba(48,209,88,0.2);
+}
+
+.flag-ok::before {
+  content: '✓';
+  color: var(--green);
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.badge-red    { background: rgba(255,59,59,0.15); color: var(--red); border: 1px solid rgba(255,59,59,0.4); }
+.badge-green  { background: rgba(48,209,88,0.15); color: var(--green); border: 1px solid rgba(48,209,88,0.4); }
+.badge-yellow { background: rgba(255,159,10,0.15); color: var(--yellow); border: 1px solid rgba(255,159,10,0.4); }
+.badge-blue   { background: rgba(0,229,255,0.1); color: var(--accent); border: 1px solid rgba(0,229,255,0.3); }
+
+/* ── URL analysis list (email tab) ── */
+.url-item {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.url-item .url-str {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+/* ── Received chain ── */
+.chain-item {
+  background: var(--bg);
+  border-left: 2px solid var(--border);
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-state .icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+/* ── Alert banner ── */
+.alert-banner {
+  display: none;
+  padding: 14px 20px;
+  background: rgba(255,59,59,0.1);
+  border: 1px solid var(--red);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 16px;
+  animation: threat-pulse 1s ease-in-out 3;
+}
+
+.alert-banner.active { display: flex; align-items: center; gap: 12px; }
+
+/* ── Error state ── */
+.error-msg {
+  padding: 14px;
+  background: rgba(255,59,59,0.08);
+  border: 1px solid rgba(255,59,59,0.3);
+  border-radius: 3px;
+  color: var(--red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 </style>
 </head>
-
 <body>
 
-<div class="glow"></div>
-<div class="glow"></div>
+<canvas id="bg-canvas"></canvas>
 
-<div class="container" id="captureArea">
-    <h1>🛡️ SecOps Intelligence</h1>
-    <p>Threat Analysis for IP / Domain</p>
+<div class="app">
 
-    <input id="target" placeholder="Enter IP or domain">
-    <br>
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div>
+      <h1>SECOPS INTEL</h1>
+      <small>THREAT INTELLIGENCE DASHBOARD v2.0</small>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot"><span class="dot"></span> LIVE</div>
+    <div id="clock" style="font-family:var(--font-mono);font-size:11px;color:var(--muted);"></div>
+  </div>
+</header>
 
-    <button onclick="analyze()">Analyze</button>
-    <button onclick="capture()">📸 Capture</button>
+<!-- ── Tabs ── -->
+<nav>
+  <button class="tab active" onclick="switchTab('ip')">IP Analysis</button>
+  <button class="tab" onclick="switchTab('domain')">Domain</button>
+  <button class="tab" onclick="switchTab('url')">URL Scanner</button>
+  <button class="tab" onclick="switchTab('email')">Email Phishing</button>
+</nav>
 
-    <div class="loader" id="loader">⏳ Analyzing...</div>
+<!-- ══════════════════════════════════
+  IP ANALYSIS
+══════════════════════════════════ -->
+<main>
 
-    <div class="cards" id="results"></div>
+<div id="panel-ip" class="panel active">
+  <div class="input-card">
+    <h2>[ IP ADDRESS ANALYSIS ]</h2>
+    <div class="input-row">
+      <input type="text" id="ip-input" placeholder="Enter IP address (e.g. 8.8.8.8)" />
+      <button class="btn" onclick="analyzeIP()">Scan</button>
+    </div>
+    <div class="loading" id="ip-loading"><div class="spinner"></div> Querying threat intelligence feeds...</div>
+  </div>
+
+  <div id="ip-alert" class="alert-banner">⚠ THREAT DETECTED — High malicious activity from this IP</div>
+  <div id="ip-results"></div>
+</div>
+
+<!-- ══════════════════════════════════
+  DOMAIN ANALYSIS
+══════════════════════════════════ -->
+<div id="panel-domain" class="panel">
+  <div class="input-card">
+    <h2>[ DOMAIN ANALYSIS ]</h2>
+    <div class="input-row">
+      <input type="text" id="domain-input" placeholder="Enter domain (e.g. example.com)" />
+      <button class="btn" onclick="analyzeDomain()">Scan</button>
+    </div>
+    <div class="loading" id="domain-loading"><div class="spinner"></div> Querying WHOIS and threat databases...</div>
+  </div>
+  <div id="domain-alert" class="alert-banner">⚠ THREAT DETECTED — Malicious domain confirmed</div>
+  <div id="domain-results"></div>
+</div>
+
+<!-- ══════════════════════════════════
+  URL SCANNER
+══════════════════════════════════ -->
+<div id="panel-url" class="panel">
+  <div class="input-card">
+    <h2>[ URL DEEP SCAN ]</h2>
+    <p style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:14px;">
+      Submits URL to VirusTotal (2-step), analyses structure, calculates threat score.
+    </p>
+    <div class="input-row">
+      <input type="text" id="url-input" placeholder="https://suspicious-link.example.com/verify" />
+      <button class="btn" onclick="analyzeURL()">Deep Scan</button>
+    </div>
+    <div class="loading" id="url-loading"><div class="spinner"></div> Submitting to VirusTotal — waiting for analysis (up to 20s)...</div>
+  </div>
+  <div id="url-alert" class="alert-banner">⚠ MALICIOUS URL — Do not visit this link</div>
+  <div id="url-results"></div>
+</div>
+
+<!-- ══════════════════════════════════
+  EMAIL PHISHING
+══════════════════════════════════ -->
+<div id="panel-email" class="panel">
+  <div class="input-card">
+    <h2>[ EMAIL PHISHING ANALYZER ]</h2>
+    <p style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:4px;">
+      Paste raw email content or full headers below. In Gmail: open email → ⋮ → Show original.
+    </p>
+    <textarea id="email-input" placeholder="Paste full email content or headers here...&#10;&#10;Include the full email text with links, headers (Received:, From:, DKIM, SPF) for maximum accuracy."></textarea>
+    <div style="margin-top:12px;">
+      <button class="btn" onclick="analyzeEmail()">Analyze Email</button>
+    </div>
+    <div class="loading" id="email-loading"><div class="spinner"></div> Extracting URLs and scanning each with VirusTotal...</div>
+  </div>
+  <div id="email-alert" class="alert-banner">⚠ PHISHING INDICATORS DETECTED — Treat this email as malicious</div>
+  <div id="email-results"></div>
+</div>
+
+</main>
 </div>
 
 <script>
-async function analyze() {
-    const target = document.getElementById("target").value;
+/* ═══════════════════════════════════════════
+   ANIMATED BACKGROUND — Matrix-style grid
+═══════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
 
-    if (!target) {
-        alert("Enter target!");
-        return;
-    }
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
 
-    document.getElementById("loader").style.display = "block";
-    document.getElementById("results").innerHTML = "";
+  function Particle() {
+    this.reset = function() {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.alpha = Math.random() * 0.5 + 0.1;
+      this.size = Math.random() * 2 + 0.5;
+    };
+    this.reset();
+  }
 
-    try {
-        const res = await fetch("/analyze?target=" + target);
-        const data = await res.json();
+  for (let i = 0; i < 80; i++) particles.push(new Particle());
 
-        document.getElementById("loader").style.display = "none";
-
-        let isDanger = data.virustotal?.malicious > 0;
-        let verdict = isDanger ? "⚠️ MALICIOUS" : "✅ SAFE";
-        let cls = isDanger ? "danger" : "safe";
-
-        /* 🚨 ALERT BACKGROUND */
-        if (isDanger) {
-            document.body.classList.add("alert");
-        } else {
-            document.body.classList.remove("alert");
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Draw connections
+    ctx.strokeStyle = 'rgba(0,229,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < 150) {
+          ctx.globalAlpha = (1 - d/150) * 0.3;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
         }
-
-        document.getElementById("results").innerHTML = `
-            <div class="card">
-                <h3>🌍 Location</h3>
-                <p>${data.geo.country}</p>
-                <p>${data.geo.city}</p>
-            </div>
-
-            <div class="card">
-                <h3>📡 ISP</h3>
-                <p>${data.geo.isp}</p>
-            </div>
-
-            <div class="card">
-                <h3>🛡️ Threat Intel</h3>
-                <p class="${cls}"><b>${verdict}</b></p>
-                <p>Malicious: ${data.virustotal?.malicious || 0}</p>
-                <p>Suspicious: ${data.virustotal?.suspicious || 0}</p>
-                <p>Harmless: ${data.virustotal?.harmless || 0}</p>
-            </div>
-
-            <div class="card">
-                <h3>🌐 Domain Info</h3>
-                <p>Age: ${data.domain_age || "N/A"}</p>
-            </div>
-        `;
-    } catch (err) {
-        document.getElementById("loader").style.display = "none";
-        alert("Error fetching data!");
+      }
     }
-}
-
-/* 📸 Screenshot */
-function capture() {
-    html2canvas(document.getElementById("captureArea")).then(canvas => {
-        let link = document.createElement('a');
-        link.download = 'secops-report.png';
-        link.href = canvas.toDataURL();
-        link.click();
+    // Draw dots
+    particles.forEach(p => {
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = '#00e5ff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) p.reset();
     });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+
+/* ─── Clock ─── */
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ─── Tab switching ─── */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
 }
 
-/* Enter key */
-document.getElementById("target").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") analyze();
-});
-</script>
+/* ─── Backend base URL (set this to your Render URL in production) ─── */
+const API_BASE = window.location.origin;
 
+/* ─── Helper: fetch wrapper ─── */
+async function apiFetch(path, body) {
+  const resp = await fetch(API_BASE + path, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  });
+  return resp.json();
+}
+
+/* ─── Loading toggle ─── */
+function setLoading(id, on) {
+  document.getElementById(id).classList.toggle('active', on);
+}
+
+/* ═══════════════════════════════════════════
+   RENDER HELPERS
+═══════════════════════════════════════════ */
+
+function threatCard(t) {
+  const r = 42;                         // radius
+  const circ = 2 * Math.PI * r;
+  const fill = circ * (1 - t.score/100);
+  const isMal = t.score >= 70;
+  const isMed = t.score >= 40;
+  const cls   = isMal ? 'malicious' : (isMed ? '' : 'safe');
+  const bkd   = t.breakdown || {};
+
+  const bdRows = Object.entries(bkd).map(([k, v]) => `
+    <div class="breakdown-row">
+      <span style="width:110px;text-transform:capitalize">${k.replace('_',' ')}</span>
+      <div class="breakdown-bar">
+        <div class="breakdown-fill" style="width:${Math.min(100,(v/40)*100)}%"></div>
+      </div>
+      <span style="width:24px;text-align:right">${v}</span>
+    </div>`).join('');
+
+  return `
+  <div class="threat-card ${cls}">
+    <div class="threat-gauge">
+      <svg viewBox="0 0 100 100">
+        <circle class="gauge-bg" cx="50" cy="50" r="${r}" />
+        <circle class="gauge-fill" cx="50" cy="50" r="${r}"
+          stroke="${t.color}"
+          stroke-dasharray="${circ}"
+          stroke-dashoffset="${fill}" />
+      </svg>
+      <div class="gauge-label">
+        <span class="gauge-score" style="color:${t.color}">${t.score}</span>
+        <span class="gauge-max">/100</span>
+      </div>
+    </div>
+    <div class="threat-info">
+      <div class="threat-severity" style="color:${t.color}">${t.severity} RISK</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px;">
+        COMPOSITE THREAT SCORE
+      </div>
+      ${bdRows}
+    </div>
+  </div>`;
+}
+
+function vtStatsCard(stats, title) {
+  const total = Math.max(stats.total || 1, 1);
+  return `
+  <div class="rcard">
+    <h3><span class="icon"></span>${title || 'VIRUSTOTAL RESULTS'}</h3>
+    <div class="vt-stats">
+      <div class="stat-row">
+        <span class="stat-label">Malicious</span>
+        <div class="stat-bar"><div class="stat-fill malicious" style="width:${(stats.malicious/total)*100}%"></div></div>
+        <span class="stat-val" style="color:${stats.malicious>0?'var(--red)':'var(--muted)'}">${stats.malicious}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Suspicious</span>
+        <div class="stat-bar"><div class="stat-fill suspicious" style="width:${(stats.suspicious/total)*100}%"></div></div>
+        <span class="stat-val" style="color:${stats.suspicious>0?'var(--yellow)':'var(--muted)'}">${stats.suspicious}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Harmless</span>
+        <div class="stat-bar"><div class="stat-fill harmless" style="width:${(stats.harmless/total)*100}%"></div></div>
+        <span class="stat-val" style="color:var(--green)">${stats.harmless}</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-family:var(--font-mono);font-size:10px;color:var(--muted);">
+      ${total} engines scanned
+    </div>
+  </div>`;
+}
+
+function geoCard(geo) {
+  const rows = [
+    ['Country',   geo.country + (geo.countryCode ? ` (${geo.countryCode})` : '')],
+    ['City',      geo.city || '—'],
+    ['Region',    geo.region || '—'],
+    ['ISP / Org', geo.isp || '—'],
+    ['ASN',       geo.as_number || '—'],
+    ['Timezone',  geo.timezone || '—'],
+    ['Lat / Lon', geo.lat && geo.lon ? `${geo.lat}, ${geo.lon}` : '—']
+  ];
+  const flags = [];
+  if (geo.hosting) flags.push('<span class="badge badge-yellow">HOSTING</span>');
+  if (geo.proxy)   flags.push('<span class="badge badge-red">PROXY</span>');
+  if (geo.vpn)     flags.push('<span class="badge badge-red">VPN</span>');
+  if (geo.tor)     flags.push('<span class="badge badge-red">TOR</span>');
+
+  return `
+  <div class="rcard">
+    <h3><span class="icon"></span>GEOLOCATION</h3>
+    ${flags.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${flags.join('')}</div>` : ''}
+    <table class="data-table">
+      ${rows.map(([k,v]) => `<tr><td>${k}</td><td>${v||'—'}</td></tr>`).join('')}
+    </table>
+  </div>`;
+}
+
+function abuseCard(a) {
+  const conf = a.abuse_confidence || 0;
+  const color = conf >= 70 ? 'var(--red)' : conf >= 30 ? 'var(--yellow)' : 'var(--green)';
+  return `
+  <div class="rcard">
+    <h3><span class="icon"></span>ABUSEIPDB</h3>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+      <div style="font-family:var(--font-head);font-size:32px;font-weight:900;color:${color}">${conf}%</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">
+        Abuse Confidence<br>
+        <span style="color:var(--text)">${a.total_reports || 0} reports (90 days)</span>
+      </div>
+    </div>
+    <table class="data-table">
+      <tr><td>ISP</td><td>${a.isp||'—'}</td></tr>
+      <tr><td>Country</td><td>${a.country||'—'}</td></tr>
+      <tr><td>Domain</td><td>${a.domain||'—'}</td></tr>
+      <tr><td>TOR Exit</td><td>${a.is_tor ? '<span class="badge badge-red">YES</span>' : 'No'}</td></tr>
+      <tr><td>Last Report</td><td>${a.last_reported ? a.last_reported.slice(0,10) : '—'}</td></tr>
+    </table>
+  </div>`;
+}
+
+function domainAgeCard(d) {
+  const age = d.age_days;
+  const color = age === null ? 'var(--muted)' : age < 90 ? 'var(--red)' : age < 365 ? 'var(--yellow)' : 'var(--green)';
+  const label = age === null ? 'Unknown' : age < 30 ? 'Very New' : age < 90 ? 'New' : age < 365 ? 'Moderate' : 'Established';
+  return `
+  <div class="rcard">
+    <h3><span class="icon"></span>DOMAIN AGE</h3>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+      <div style="font-family:var(--font-head);font-size:28px;font-weight:900;color:${color}">
+        ${age !== null ? age + 'd' : '?'}
+      </div>
+      <div>
+        <span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}55">${label}</span>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:4px;">Domain age in days</div>
+      </div>
+    </div>
+    <table class="data-table">
+      <tr><td>Created</td><td>${d.creation_date ? d.creation_date.slice(0,10) : '—'}</td></tr>
+      <tr><td>Registrar</td><td>${d.registrar||'—'}</td></tr>
+      <tr><td>Expires</td><td>${d.expiration ? String(d.expiration).slice(0,10) : '—'}</td></tr>
+    </table>
+  </div>`;
+}
+
+function urlIndicatorsCard(ind) {
+  const flags = ind.flags || [];
+  return `
+  <div class="rcard">
+    <h3><span class="icon"></span>URL RISK INDICATORS</h3>
+    ${flags.length === 0
+      ? '<div class="flag-item flag-ok">No structural risk flags found</div>'
+      : flags.map(f => `<div class="flag-item" style="margin-bottom:6px">${f}</div>`).join('')}
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   IP ANALYSIS
+═══════════════════════════════════════════ */
+async function analyzeIP() {
+  const ip = document.getElementById('ip-input').value.trim();
+  if (!ip) return;
+  const res  = document.getElementById('ip-results');
+  const alert = document.getElementById('ip-alert');
+  res.innerHTML = '';
+  alert.classList.remove('active');
+  setLoading('ip-loading', true);
+
+  try {
+    const d = await apiFetch('/api/analyze/ip', { ip });
+    setLoading('ip-loading', false);
+
+    if (d.error) { res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`; return; }
+
+    if (d.threat && d.threat.score >= 70) alert.classList.add('active');
+
+    res.innerHTML = `
+      ${d.threat ? threatCard(d.threat) : ''}
+      <div class="results-grid">
+        ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — IP') : ''}
+        ${d.abuseipdb && !d.abuseipdb.error ? abuseCard(d.abuseipdb) : ''}
+        ${d.geolocation && !d.geolocation.error ? geoCard(d.geolocation) : ''}
+        <div class="rcard">
+          <h3><span class="icon"></span>VT IP INFO</h3>
+          <table class="data-table">
+            <tr><td>Reputation</td><td style="color:${(d.virustotal?.reputation||0) < 0 ? 'var(--red)':'var(--green)'}">${d.virustotal?.reputation ?? '—'}</td></tr>
+            <tr><td>Country</td><td>${d.virustotal?.country||'—'}</td></tr>
+            <tr><td>AS Owner</td><td>${d.virustotal?.as_owner||'—'}</td></tr>
+            <tr><td>Network</td><td>${d.virustotal?.network||'—'}</td></tr>
+          </table>
+        </div>
+      </div>`;
+  } catch(e) {
+    setLoading('ip-loading', false);
+    res.innerHTML = `<div class="error-msg">Connection error. Is the backend running? ${e.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   DOMAIN ANALYSIS
+═══════════════════════════════════════════ */
+async function analyzeDomain() {
+  const domain = document.getElementById('domain-input').value.trim();
+  if (!domain) return;
+  const res   = document.getElementById('domain-results');
+  const alert = document.getElementById('domain-alert');
+  res.innerHTML = '';
+  alert.classList.remove('active');
+  setLoading('domain-loading', true);
+
+  try {
+    const d = await apiFetch('/api/analyze/domain', { domain });
+    setLoading('domain-loading', false);
+
+    if (d.error) { res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`; return; }
+
+    if (d.threat?.score >= 70) alert.classList.add('active');
+
+    const cats = Object.entries(d.virustotal?.categories || {})
+      .map(([k,v]) => `<span class="badge badge-blue" style="margin:2px">${v}</span>`).join('') || '—';
+
+    res.innerHTML = `
+      ${d.threat ? threatCard(d.threat) : ''}
+      <div class="results-grid">
+        ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — DOMAIN') : ''}
+        ${d.domain_age ? domainAgeCard(d.domain_age) : ''}
+      </div>
+      <div class="rcard" style="margin-top:16px">
+        <h3><span class="icon"></span>CATEGORIES</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${cats}</div>
+      </div>`;
+  } catch(e) {
+    setLoading('domain-loading', false);
+    res.innerHTML = `<div class="error-msg">Connection error: ${e.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   URL SCANNER
+═══════════════════════════════════════════ */
+async function analyzeURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) return;
+  const res   = document.getElementById('url-results');
+  const alert = document.getElementById('url-alert');
+  res.innerHTML = '';
+  alert.classList.remove('active');
+  setLoading('url-loading', true);
+
+  try {
+    const d = await apiFetch('/api/analyze/url', { url });
+    setLoading('url-loading', false);
+
+    if (d.error) { res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`; return; }
+
+    if (d.threat?.score >= 70) alert.classList.add('active');
+
+    res.innerHTML = `
+      ${d.threat ? threatCard(d.threat) : ''}
+      <div class="results-grid">
+        ${d.virustotal?.stats ? vtStatsCard(d.virustotal.stats, 'VIRUSTOTAL — URL') : ''}
+        ${d.indicators ? urlIndicatorsCard(d.indicators) : ''}
+        ${d.domain_age ? domainAgeCard(d.domain_age) : ''}
+        <div class="rcard">
+          <h3><span class="icon"></span>SCAN INFO</h3>
+          <table class="data-table">
+            <tr><td>URL</td><td style="word-break:break-all;color:var(--accent)">${d.url}</td></tr>
+            <tr><td>Domain</td><td>${d.domain||'—'}</td></tr>
+            <tr><td>VT Source</td><td>${d.virustotal?.source||'—'}</td></tr>
+          </table>
+        </div>
+      </div>`;
+  } catch(e) {
+    setLoading('url-loading', false);
+    res.innerHTML = `<div class="error-msg">Connection error: ${e.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   EMAIL PHISHING ANALYSIS
+═══════════════════════════════════════════ */
+async function analyzeEmail() {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email) return;
+  const res   = document.getElementById('email-results');
+  const alert = document.getElementById('email-alert');
+  res.innerHTML = '';
+  alert.classList.remove('active');
+  setLoading('email-loading', true);
+
+  try {
+    const d = await apiFetch('/api/analyze/email', { email });
+    setLoading('email-loading', false);
+
+    if (d.error) { res.innerHTML = `<div class="error-msg">Error: ${d.error}</div>`; return; }
+
+    if (d.threat?.score >= 40 || (d.phishing_flags && d.phishing_flags.length >= 2)) {
+      alert.classList.add('active');
+    }
+
+    // Phishing flags
+    const flagsHtml = (d.phishing_flags && d.phishing_flags.length > 0)
+      ? d.phishing_flags.map(f => `<div class="flag-item" style="margin-bottom:6px">${f}</div>`).join('')
+      : '<div class="flag-item flag-ok">No phishing indicators detected</div>';
+
+    // Header info
+    const hdr = d.headers || {};
+    const spfColor  = hdr.spf  === 'PASS' ? 'var(--green)' : (hdr.spf  === 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
+    const dkimColor = hdr.dkim === 'PASS' ? 'var(--green)' : (hdr.dkim === 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
+    const dmarcColor= hdr.dmarc=== 'PASS' ? 'var(--green)' : (hdr.dmarc=== 'NOT FOUND' ? 'var(--muted)' : 'var(--red)');
+
+    const chainHtml = (hdr.received_chain && hdr.received_chain.length > 0)
+      ? hdr.received_chain.map((h,i) => `<div class="chain-item">${i+1}. ${h}</div>`).join('')
+      : '<div style="color:var(--muted);font-family:var(--font-mono);font-size:11px">No Received headers found</div>';
+
+    // URL results
+    const urlsHtml = (d.urls_analyzed && d.urls_analyzed.length > 0)
+      ? d.urls_analyzed.map(u => {
+          const mal = u.vt?.stats?.malicious || 0;
+          const badgeClass = mal > 0 ? 'badge-red' : 'badge-green';
+          const badgeLabel = mal > 0 ? `MALICIOUS (${mal})` : 'CLEAN';
+          return `
+          <div class="url-item">
+            <div class="url-str">${u.url}</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span class="badge ${badgeClass}">${badgeLabel}</span>
+              ${(u.indicators?.flags || []).slice(0,2).map(f =>
+                `<span class="badge badge-yellow" style="font-size:9px">${f.slice(0,50)}</span>`
+              ).join('')}
+            </div>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--muted);font-family:var(--font-mono);font-size:12px">No URLs found in email</div>';
+
+    res.innerHTML = `
+      ${d.threat ? threatCard(d.threat) : ''}
+
+      <div class="results-grid">
+        <!-- Header Authentication -->
+        <div class="rcard">
+          <h3><span class="icon"></span>EMAIL AUTHENTICATION</h3>
+          <table class="data-table">
+            <tr><td>SPF</td><td style="color:${spfColor};font-weight:700">${hdr.spf||'—'}</td></tr>
+            <tr><td>DKIM</td><td style="color:${dkimColor};font-weight:700">${hdr.dkim||'—'}</td></tr>
+            <tr><td>DMARC</td><td style="color:${dmarcColor};font-weight:700">${hdr.dmarc||'—'}</td></tr>
+            <tr><td>From</td><td>${hdr.from_address||'—'}</td></tr>
+            <tr><td>Reply-To</td><td>${hdr.reply_to||'—'}</td></tr>
+            <tr><td>Reply Mismatch</td><td>
+              ${hdr.reply_to_mismatch
+                ? '<span class="badge badge-red">YES — SUSPICIOUS</span>'
+                : '<span class="badge badge-green">NO</span>'}
+            </td></tr>
+            <tr><td>Hop Count</td><td>${hdr.hop_count||0}</td></tr>
+          </table>
+        </div>
+
+        <!-- Phishing Indicators -->
+        <div class="rcard">
+          <h3><span class="icon"></span>PHISHING INDICATORS (${d.phishing_flags?.length||0})</h3>
+          ${flagsHtml}
+        </div>
+      </div>
+
+      <!-- URL Analysis -->
+      <div class="rcard" style="margin-top:16px">
+        <h3><span class="icon"></span>URL ANALYSIS (${d.url_count} found, ${d.urls_analyzed?.length||0} scanned)</h3>
+        ${urlsHtml}
+      </div>
+
+      <!-- Received Chain -->
+      <div class="rcard" style="margin-top:16px">
+        <h3><span class="icon"></span>RECEIVED CHAIN</h3>
+        ${chainHtml}
+      </div>`;
+
+  } catch(e) {
+    setLoading('email-loading', false);
+    res.innerHTML = `<div class="error-msg">Connection error: ${e.message}</div>`;
+  }
+}
+
+/* ─── Enter key support ─── */
+document.getElementById('ip-input').addEventListener('keydown',     e => e.key==='Enter' && analyzeIP());
+document.getElementById('domain-input').addEventListener('keydown', e => e.key==='Enter' && analyzeDomain());
+document.getElementById('url-input').addEventListener('keydown',    e => e.key==='Enter' && analyzeURL());
+</script>
 </body>
 </html>
