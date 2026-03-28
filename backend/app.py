@@ -13,7 +13,8 @@ import time
 import datetime
 import base64
 import os
-from functools import lru_cache
+import socket
+import traceback
 from urllib.parse import urlparse
 
 app = Flask(__name__, static_folder="static")
@@ -39,6 +40,26 @@ def handle_options(path):
         "Access-Control-Allow-Headers": "Content-Type",
         "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
     })
+
+# ── Global error handlers — always return JSON, never HTML ──
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Catch ALL unhandled exceptions and return JSON with the real error."""
+    tb = traceback.format_exc()
+    print(f"[ERROR] {tb}")   # This shows in Render logs
+    return jsonify({
+        "error": str(e),
+        "type":  type(e).__name__,
+        "trace": tb.split("\n")[-3]   # Last meaningful line
+    }), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "Endpoint not found", "path": request.path}), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({"error": "Internal server error", "detail": str(e)}), 500
 
 # ─────────────────────────────────────────────
 # API KEYS — Set these in Render Environment Variables
@@ -878,7 +899,6 @@ def api_phishing_ticket():
     domain_ip_results = []
     if sender_domain:
         try:
-            import socket
             ip = socket.gethostbyname(sender_domain)
             geo = get_geolocation(ip)
             abuse = check_abuseipdb(ip)
