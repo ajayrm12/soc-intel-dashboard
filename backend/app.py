@@ -17,7 +17,28 @@ from functools import lru_cache
 from urllib.parse import urlparse
 
 app = Flask(__name__, static_folder="static")
-CORS(app)
+
+# Allow requests from any origin — needed for local HTML file access (file://)
+CORS(app, resources={r"/api/*": {"origins": "*"}},
+     supports_credentials=False)
+
+# Belt-and-suspenders: add CORS headers to every API response
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"]  = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    return response
+
+@app.route("/api/<path:path>", methods=["OPTIONS"])
+def handle_options(path):
+    """Handle CORS preflight for all API routes."""
+    from flask import Response
+    return Response("", 204, headers={
+        "Access-Control-Allow-Origin":  "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
+    })
 
 # ─────────────────────────────────────────────
 # API KEYS — Set these in Render Environment Variables
