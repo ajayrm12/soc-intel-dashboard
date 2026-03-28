@@ -739,6 +739,333 @@ def api_analyze_email():
     })
 
 
+# ══════════════════════════════════════════════
+# SOC PHISHING TICKET ANALYZER
+# Mirrors real SOC analyst workflow:
+# Sender domain → Domain IP → Domain Age →
+# URL check → Header SPF/DKIM → IP reputation → Verdict
+# ══════════════════════════════════════════════
+
+def extract_sender_domain(email_text):
+    """Pull sender domain from From: header."""
+    match = re.search(r"From:.*?@([\w.\-]+)", email_text, re.I)
+    if match:
+        return match.group(1).lower().strip()
+    return None
+
+def extract_sender_ip_from_received(email_text):
+    """
+    Extract originating sender IP from the LAST Received: header
+    (closest to the original sender, not internal hops).
+    """
+    received = re.findall(
+        r"Received:.*?(?:\[(\d{1,3}(?:\.\d{1,3}){3})\]|from\s+\S+\s+\[(\d{1,3}(?:\.\d{1,3}){3})\])",
+        email_text, re.I | re.S
+    )
+    # Flatten and get last valid IP (furthest hop = true origin)
+    ips = [ip for pair in received for ip in pair if ip]
+    # Filter private IPs
+    public_ips = [ip for ip in ips if not (
+        ip.startswith("10.") or ip.startswith("192.168.") or
+        ip.startswith("172.") or ip == "127.0.0.1"
+    )]
+    return public_ips[-1] if public_ips else None
+
+def check_urlvoid(domain):
+    """
+    URLVoid-style check: use VirusTotal domain report as proxy.
+    Returns clean/suspicious based on VT stats.
+    """
+    vt = analyze_domain_vt(domain)
+    stats = vt.get("stats", {})
+    mal = stats.get("malicious", 0)
+    sus = stats.get("suspicious", 0)
+    if mal >= 3:
+        return "Malicious", mal, stats
+    elif mal > 0 or sus > 0:
+        return "Suspicious", mal + sus, stats
+    return "Clean", 0, stats
+
+@app.route("/api/analyze/phishing-ticket", methods=["POST"])
+def api_phishing_ticket():
+    """
+    Full SOC-style phishing email analysis.
+    Accepts raw email text (paste or .eml upload).
+    Returns structured SOC ticket with per-check results and final verdict.
+    """
+    data       = request.get_json()
+    email_text = (data or {}).get("email", "")
+    ticket_no  = (data or {}).get("ticket_no", "MANUAL-" + str(int(time.time()))[-6:])
+
+    if not email_text:
+        return jsonify({"error": "No email content provided"}), 400
+
+    result = {
+        "ticket_no":   ticket_no,
+        "date":        datetime.datetime.utcnow().strftime("%d-%m-%Y"),
+        "checks":      {},
+        "verdict":     None,
+        "threat_score": 0
+    }
+
+    checks  = result["checks"]
+    risk_pts = 0
+
+    # ── 1. Sender Domain Check ──
+    sender_domain = extract_sender_domain(email_text)
+    checks["sender_domain"] = {"domain": sender_domain or "Not found"}
+    if sender_domain:
+        sd_status, sd_count, sd_stats = check_urlvoid(sender_domain)
+        checks["sender_domain"].update({
+            "status": sd_status,
+            "malicious_engines": sd_count,
+            "vt_stats": sd_stats
+        })
+        if sd_status == "Malicious":   risk_pts += 35
+        elif sd_status == "Suspicious": risk_pts += 15
+    else:
+        checks["sender_domain"]["status"] = "Not found"
+
+    # ── 2. Domain Check (all domains in email body) ──
+    urls = extract_urls(email_text)
+    body_domains = list(set([
+        urlparse(u).netloc.lstrip("www.").split(":")[0]
+        for u in urls if urlparse(u).netloc
+    ]))
+    domain_results = []
+    worst_domain_mal = 0
+    for d in body_domains[:4]:
+        status, count, stats = check_urlvoid(d)
+        domain_results.append({"domain": d, "status": status, "malicious": count, "stats": stats})
+        worst_domain_mal = max(worst_domain_mal, count)
+        if status == "Malicious":   risk_pts += 20
+        elif status == "Suspicious": risk_pts += 8
+
+    overall_domain_status = "Clean"
+    if any(r["status"] == "Malicious" for r in domain_results):
+        overall_domain_status = "Malicious"
+    elif any(r["status"] == "Suspicious" for r in domain_results):
+        overall_domain_status = "Suspicious"
+
+    checks["domain_check"] = {
+        "domains_found": len(body_domains),
+        "results": domain_results,
+        "overall_status": overall_domain_status
+    }
+
+    # ── 3. Domain IP Check ──
+    domain_ip_results = []
+    if sender_domain:
+        try:
+            import socket
+            ip = socket.gethostbyname(sender_domain)
+            geo = get_geolocation(ip)
+            abuse = check_abuseipdb(ip)
+            vt_ip = analyze_ip_vt(ip)
+            ip_mal = vt_ip.get("stats", {}).get("malicious", 0)
+            abuse_conf = abuse.get("abuse_confidence", 0) if "abuse_confidence" in abuse else 0
+
+            ip_status = "Clean"
+            if ip_mal >= 3 or abuse_conf >= 50:
+                ip_status = "Malicious"
+                risk_pts += 25
+            elif ip_mal > 0 or abuse_conf >= 20:
+                ip_status = "Suspicious"
+                risk_pts += 10
+
+            domain_ip_results.append({
+                "ip": ip,
+                "status": ip_status,
+                "country": geo.get("country", "Unknown"),
+                "isp": geo.get("isp", "Unknown"),
+                "vt_malicious": ip_mal,
+                "abuse_confidence": abuse_conf,
+                "is_tor": abuse.get("is_tor", False),
+                "is_proxy": geo.get("proxy", False)
+            })
+        except Exception as e:
+            domain_ip_results.append({"ip": "Resolution failed", "status": "Unknown"})
+
+    checks["domain_ip"] = {
+        "results": domain_ip_results,
+        "overall_status": domain_ip_results[0]["status"] if domain_ip_results else "Unknown"
+    }
+
+    # ── 4. Domain Age ──
+    age_data = get_domain_age(sender_domain) if sender_domain else {}
+    age_days  = age_data.get("age_days")
+    age_years = round(age_days / 365, 1) if age_days else None
+    age_status = "Unknown"
+    if age_days is not None:
+        if age_days < 30:
+            age_status = "Very New (High Risk)"
+            risk_pts += 15
+        elif age_days < 180:
+            age_status = "New (Moderate Risk)"
+            risk_pts += 8
+        elif age_days < 365:
+            age_status = "Less than 1 Year"
+            risk_pts += 3
+        else:
+            age_status = f"{age_years} Years"
+
+    checks["domain_age"] = {
+        "domain": sender_domain,
+        "age_days": age_days,
+        "age_display": age_status,
+        "creation_date": age_data.get("creation_date", "Unknown"),
+        "registrar": age_data.get("registrar", "Unknown")
+    }
+
+    # ── 5. URL Check ──
+    url_results = []
+    worst_url_mal = 0
+    for url in urls[:5]:
+        ind = analyze_url_indicators(url)
+        vt  = analyze_url_vt(url)
+        mal = vt.get("stats", {}).get("malicious", 0)
+        worst_url_mal = max(worst_url_mal, mal)
+        status = "Malicious" if mal >= 3 else ("Suspicious" if mal > 0 or ind["risk_points"] >= 8 else "Clean")
+        url_results.append({
+            "url": url,
+            "vt_malicious": mal,
+            "vt_stats": vt.get("stats", {}),
+            "risk_flags": ind["flags"],
+            "risk_points": ind["risk_points"],
+            "status": status
+        })
+        if status == "Malicious":   risk_pts += 20
+        elif status == "Suspicious": risk_pts += 8
+
+    url_overall = "Clean"
+    if any(r["status"] == "Malicious" for r in url_results):
+        url_overall = "Malicious"
+    elif any(r["status"] == "Suspicious" for r in url_results):
+        url_overall = "Suspicious"
+
+    checks["url_check"] = {
+        "urls_found": len(urls),
+        "urls_analyzed": len(url_results),
+        "results": url_results,
+        "overall_status": url_overall
+    }
+
+    # ── 6. Attachment Check ──
+    # Detect attachment references in pasted email
+    attachment_patterns = re.findall(
+        r'filename=["\']?([^"\';\s]+\.(exe|zip|rar|js|vbs|bat|cmd|ps1|docm|xlsm|pdf|iso|img|jar|hta|scr))["\']?',
+        email_text, re.I
+    )
+    attachment_status = "Clean"
+    attachment_names = []
+    if attachment_patterns:
+        attachment_names = [m[0] for m in attachment_patterns]
+        dangerous_exts  = {"exe","js","vbs","bat","cmd","ps1","docm","xlsm","hta","scr","jar"}
+        if any(m[1].lower() in dangerous_exts for m in attachment_patterns):
+            attachment_status = "Malicious"
+            risk_pts += 30
+        else:
+            attachment_status = "Suspicious"
+            risk_pts += 10
+
+    checks["attachment"] = {
+        "found": len(attachment_names),
+        "files": attachment_names,
+        "status": attachment_status
+    }
+
+    # ── 7. Header Check (SPF / DKIM / DMARC) ──
+    hdr = parse_email_headers(email_text)
+    spf  = hdr.get("spf",  "NOT FOUND")
+    dkim = hdr.get("dkim", "NOT FOUND")
+    dmarc= hdr.get("dmarc","NOT FOUND")
+
+    header_issues = []
+    if spf  in ("FAIL","SOFTFAIL"): header_issues.append("SPF failed"); risk_pts += 10
+    if dkim == "FAIL":              header_issues.append("DKIM failed"); risk_pts += 10
+    if dmarc== "FAIL":              header_issues.append("DMARC failed"); risk_pts += 8
+    if hdr.get("reply_to_mismatch"):
+        header_issues.append("Reply-To domain mismatch"); risk_pts += 12
+
+    spf_align  = "Yes" if spf  == "PASS" else ("No" if spf  in ("FAIL","SOFTFAIL") else "N/A")
+    dkim_align = "Yes" if dkim == "PASS" else ("No" if dkim == "FAIL" else "N/A")
+
+    checks["header"] = {
+        "spf":              spf,
+        "dkim":             dkim,
+        "dmarc":            dmarc,
+        "spf_alignment":    spf_align,
+        "dkim_alignment":   dkim_align,
+        "from_address":     hdr.get("from_address", "Not found"),
+        "reply_to":         hdr.get("reply_to"),
+        "reply_to_mismatch":hdr.get("reply_to_mismatch", False),
+        "hop_count":        hdr.get("hop_count", 0),
+        "issues":           header_issues,
+        "overall_status":   "Issues Found" if header_issues else "Pass"
+    }
+
+    # ── 8. Header IP Check ──
+    sender_ip = extract_sender_ip_from_received(email_text)
+    header_ip_result = {"ip": None, "status": "N/A"}
+    if sender_ip:
+        geo   = get_geolocation(sender_ip)
+        abuse = check_abuseipdb(sender_ip)
+        vt_ip = analyze_ip_vt(sender_ip)
+        ip_mal  = vt_ip.get("stats", {}).get("malicious", 0)
+        abuse_c = abuse.get("abuse_confidence", 0) if "abuse_confidence" in abuse else 0
+        ip_status = "Clean"
+        if ip_mal >= 3 or abuse_c >= 50:
+            ip_status = "Malicious"; risk_pts += 20
+        elif ip_mal > 0 or abuse_c >= 20:
+            ip_status = "Suspicious"; risk_pts += 8
+
+        header_ip_result = {
+            "ip":               sender_ip,
+            "status":           ip_status,
+            "country":          geo.get("country", "Unknown"),
+            "isp":              geo.get("isp", "Unknown"),
+            "vt_malicious":     ip_mal,
+            "abuse_confidence": abuse_c,
+            "is_tor":           geo.get("tor", False),
+            "is_proxy":         geo.get("proxy", False)
+        }
+        if ip_status == "Malicious":   risk_pts += 15
+        elif ip_status == "Suspicious": risk_pts += 5
+    else:
+        header_ip_result = {"ip": "Not found in headers", "status": "N/A"}
+
+    checks["header_ip"] = header_ip_result
+
+    # ── Final Verdict ──
+    risk_pts = min(100, risk_pts)
+    result["threat_score"] = risk_pts
+
+    all_statuses = [
+        checks["sender_domain"].get("status",""),
+        checks["domain_check"]["overall_status"],
+        checks["domain_ip"]["overall_status"],
+        checks["url_check"]["overall_status"],
+        checks["attachment"]["status"],
+        checks["header"]["overall_status"],
+        checks["header_ip"].get("status","")
+    ]
+
+    malicious_count  = sum(1 for s in all_statuses if s == "Malicious")
+    suspicious_count = sum(1 for s in all_statuses if s in ("Suspicious","Issues Found"))
+
+    if malicious_count >= 1 or risk_pts >= 50:
+        result["verdict"] = "Malicious"
+        result["verdict_reason"] = f"{malicious_count} malicious indicator(s) found. Threat score: {risk_pts}/100."
+    elif suspicious_count >= 2 or risk_pts >= 25:
+        result["verdict"] = "Suspicious"
+        result["verdict_reason"] = f"{suspicious_count} suspicious indicator(s). Recommend further investigation."
+    else:
+        result["verdict"] = "Non Malicious"
+        result["verdict_reason"] = "No significant threat indicators detected across all checks."
+
+    return jsonify(result)
+
+
 # ─────────────────────────────────────────────
 # Health check for Render
 # ─────────────────────────────────────────────
