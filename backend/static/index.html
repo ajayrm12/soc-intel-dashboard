@@ -818,6 +818,119 @@ textarea {
   .soc-check-row { grid-template-columns: 1fr; }
   .soc-check-label { border-right: none; border-bottom: 1px solid rgba(26,58,92,0.4); }
 }
+/* ── Settings Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(5,10,15,0.85);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+
+.modal-box {
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 28px;
+  width: 90%;
+  max-width: 520px;
+  box-shadow: 0 0 40px rgba(0,229,255,0.15);
+}
+
+.modal-box h2 {
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+
+.modal-field {
+  margin-bottom: 18px;
+}
+
+.modal-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.modal-field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-radius: 3px;
+  outline: none;
+}
+
+.modal-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,229,255,0.1);
+}
+
+.modal-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.modal-hint a { color: var(--accent); text-decoration: none; }
+
+.modal-actions {
+  display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap;
+}
+
+.modal-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  margin-top: 14px;
+  display: none;
+}
+
+.modal-status.ok  { background: rgba(48,209,88,0.1); border: 1px solid var(--green); color: var(--green); display:block; }
+.modal-status.err { background: rgba(255,59,59,0.1);  border: 1px solid var(--red);   color: var(--red);   display:block; }
+
+/* Settings gear button */
+.settings-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Connection indicator in header */
+#conn-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#conn-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted);
+}
+#conn-dot.connected    { background: var(--green); box-shadow: 0 0 6px var(--green); }
+#conn-dot.disconnected { background: var(--red);   box-shadow: 0 0 6px var(--red); animation: blink 1s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -827,6 +940,59 @@ textarea {
 <div class="app">
 
 <!-- ── Header ── -->
+<!-- ══════════════════════════════════
+  SETTINGS MODAL
+══════════════════════════════════ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-box">
+    <h2>⚙ BACKEND CONFIGURATION</h2>
+
+    <div class="modal-field">
+      <label>Backend URL (your Render deployment)</label>
+      <input type="text" id="backend-url-input"
+        placeholder="https://your-app-name.onrender.com" />
+      <div class="modal-hint">
+        Deploy your Flask backend to Render (free), then paste the URL here.<br>
+        It will be saved in your browser — you only need to do this once.<br>
+        Get a free account at <a href="https://render.com" target="_blank">render.com</a>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>VirusTotal API Key</label>
+      <input type="password" id="vt-key-input"
+        placeholder="Optional — override server key" />
+      <div class="modal-hint">
+        Leave blank to use the key set in Render environment variables.
+      </div>
+    </div>
+
+    <div id="modal-status" class="modal-status"></div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="saveSettings()">💾 Save &amp; Test Connection</button>
+      <button class="btn" onclick="closeSettings()"
+        style="border-color:var(--muted);color:var(--muted)">Cancel</button>
+    </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:2px;">
+        QUICK DEPLOY STEPS
+      </div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:2">
+        1. Push your code to GitHub<br>
+        2. Go to <a href="https://render.com" target="_blank" style="color:var(--accent)">render.com</a>
+           → New → Web Service<br>
+        3. Root Directory: <span style="color:var(--text)">backend</span> &nbsp;
+           Start Command: <span style="color:var(--text)">gunicorn app:app</span><br>
+        4. Add env vars: <span style="color:var(--text)">VT_API_KEY</span> and
+           <span style="color:var(--text)">ABUSEIPDB_KEY</span><br>
+        5. Copy the <span style="color:var(--accent)">.onrender.com</span> URL here ↑
+      </div>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="logo">
     <div class="logo-icon"></div>
@@ -837,7 +1003,12 @@ textarea {
   </div>
   <div class="status-bar">
     <div class="status-dot"><span class="dot"></span> LIVE</div>
+    <div id="conn-status">
+      <span id="conn-dot"></span>
+      <span id="conn-label">NOT CONFIGURED</span>
+    </div>
     <div id="clock" style="font-family:var(--font-mono);font-size:11px;color:var(--muted);"></div>
+    <button class="settings-btn" onclick="openSettings()">⚙ BACKEND</button>
   </div>
 </header>
 
@@ -1045,17 +1216,142 @@ function switchTab(name) {
   event.currentTarget.classList.add('active');
 }
 
-/* ─── Backend base URL (set this to your Render URL in production) ─── */
-const API_BASE = window.location.origin;
+/* ═══════════════════════════════════════════
+   BACKEND URL — reads from localStorage or
+   falls back to same-origin (when served by Flask)
+═══════════════════════════════════════════ */
+function getBackendURL() {
+  const saved = localStorage.getItem('secops_backend_url');
+  if (saved && saved.startsWith('http')) return saved.replace(/\/$/, '');
+  // If running from Flask (not file://), use same origin
+  if (window.location.protocol !== 'file:') return window.location.origin;
+  return null;
+}
 
-/* ─── Helper: fetch wrapper ─── */
+function openSettings() {
+  const saved = localStorage.getItem('secops_backend_url') || '';
+  document.getElementById('backend-url-input').value = saved;
+  document.getElementById('vt-key-input').value = '';
+  document.getElementById('modal-status').className = 'modal-status';
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('active');
+}
+
+// Close modal when clicking overlay background
+document.getElementById('settings-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+async function saveSettings() {
+  const url = document.getElementById('backend-url-input').value.trim().replace(/\/$/, '');
+  const status = document.getElementById('modal-status');
+
+  if (!url.startsWith('http')) {
+    status.className = 'modal-status err';
+    status.textContent = '✗ Invalid URL — must start with https://';
+    return;
+  }
+
+  status.className = 'modal-status';
+  status.textContent = 'Testing connection...';
+  status.style.display = 'block';
+
+  try {
+    const resp = await fetch(url + '/health', { signal: AbortSignal.timeout(8000) });
+    if (resp.ok) {
+      localStorage.setItem('secops_backend_url', url);
+      status.className = 'modal-status ok';
+      status.textContent = '✓ Connected! Backend is online. Saving...';
+      updateConnectionStatus(true, url);
+      setTimeout(closeSettings, 1500);
+    } else {
+      status.className = 'modal-status err';
+      status.textContent = `✗ Server responded with ${resp.status}. Check your URL.`;
+    }
+  } catch(e) {
+    status.className = 'modal-status err';
+    status.textContent = '✗ Could not reach backend. Is Render deployed and awake? (Free tier sleeps — try again in 30s)';
+  }
+}
+
+function updateConnectionStatus(ok, url) {
+  const dot   = document.getElementById('conn-dot');
+  const label = document.getElementById('conn-label');
+  if (ok) {
+    dot.className = 'connected';
+    const host = new URL(url).hostname.replace('.onrender.com','');
+    label.textContent = host.toUpperCase();
+    label.style.color = 'var(--green)';
+  } else {
+    dot.className = 'disconnected';
+    label.textContent = 'NOT CONFIGURED';
+    label.style.color = 'var(--red)';
+  }
+}
+
+// On page load — check if we have a saved URL and ping it
+(async function initConnection() {
+  const url = getBackendURL();
+  if (!url) {
+    updateConnectionStatus(false, null);
+    // Auto-open settings if running as a local file with no config
+    if (window.location.protocol === 'file:') {
+      setTimeout(openSettings, 800);
+    }
+    return;
+  }
+  try {
+    const resp = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+    updateConnectionStatus(resp.ok, url);
+  } catch(e) {
+    updateConnectionStatus(false, url);
+  }
+})();
+
+const API_BASE = { toString: () => getBackendURL() || '' };
+
+/* ─── Helper: fetch wrapper with proper error handling ─── */
 async function apiFetch(path, body) {
-  const resp = await fetch(API_BASE + path, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body)
-  });
-  return resp.json();
+  const base = getBackendURL();
+  if (!base) {
+    openSettings();
+    throw new Error('Backend URL not configured. Please set your Render URL in ⚙ BACKEND settings.');
+  }
+
+  let resp;
+  try {
+    resp = await fetch(base + path, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body)
+    });
+  } catch(e) {
+    // Network-level failure (CORS, DNS, no internet, Render sleeping)
+    if (e.message.includes('fetch')) {
+      throw new Error('Cannot reach backend. If using Render free tier, it may be sleeping — wait 30 seconds and try again.');
+    }
+    throw e;
+  }
+
+  // Try to parse as JSON — if it fails, show the raw response text for debugging
+  const text = await resp.text();
+  try {
+    return JSON.parse(text);
+  } catch(e) {
+    // Server returned HTML (error page, proxy page, wrong URL)
+    const preview = text.slice(0, 200).replace(/</g, '&lt;');
+    throw new Error(
+      `Backend returned non-JSON response (status ${resp.status}).\n\n` +
+      `This usually means:\n` +
+      `• Wrong backend URL — check ⚙ BACKEND settings\n` +
+      `• Render is still deploying — wait 1-2 minutes\n` +
+      `• Flask crashed — check Render logs\n\n` +
+      `Server said: ${preview}`
+    );
+  }
 }
 
 /* ─── Loading toggle ─── */
